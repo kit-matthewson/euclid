@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
 fn window_conf() -> Conf {
@@ -23,6 +21,7 @@ struct ColourPalette {
     yellow: Color,
 }
 
+#[allow(dead_code)]
 enum Shape {
     Circle {
         pos: Vec2,
@@ -35,6 +34,29 @@ enum Shape {
         pos2: Vec2,
         colour: Color,
     },
+}
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+enum Tool {
+    Compass,
+    StraightEdge,
+    Arc,
+    Segment,
+}
+
+impl Tool {
+    pub fn values() -> Vec<Tool> {
+        vec![Tool::Compass, Tool::StraightEdge, Tool::Arc, Tool::Segment]
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Tool::Compass => "Compass",
+            Tool::StraightEdge => "Straight Edge",
+            Tool::Arc => "Arc",
+            Tool::Segment => "Segment",
+        }
+    }
 }
 
 #[macroquad::main(window_conf)]
@@ -55,6 +77,8 @@ async fn main() {
     let mut shapes: Vec<Shape> = Vec::new();
 
     let mut origin: Option<Vec2> = None;
+
+    let mut current_tool = Tool::Compass;
 
     loop {
         clear_background(pallette.black);
@@ -82,7 +106,7 @@ async fn main() {
             None => (),
         }
 
-        draw_controls(&pallette, font).await;
+        draw_controls(&pallette, font, &current_tool).await;
 
         if is_mouse_button_pressed(MouseButton::Left) {
             match origin {
@@ -94,6 +118,12 @@ async fn main() {
             }
         } else if is_mouse_button_pressed(MouseButton::Right) {
             origin = None;
+        }
+
+        if is_key_pressed(KeyCode::Tab) {
+            let tool_iter = Tool::values();
+            let i = tool_iter.iter().position(|&tool| tool == current_tool).unwrap();
+            current_tool = tool_iter[(i + 1) % tool_iter.len()].clone();
         }
 
         if is_key_pressed(KeyCode::Delete) {
@@ -114,31 +144,17 @@ fn get_shape(pos1: Vec2, pos2: Vec2, colour: Color) -> Shape {
     }
 }
 
-async fn draw_controls(_pallette: &ColourPalette, font: Font) {
+async fn draw_controls(_pallette: &ColourPalette, font: Font, selected_tool: &Tool) {
     let padding = 8.0;
 
-    let selected = 0;
-    for (index, option) in vec!["Compass", "Straight Edge"].iter().enumerate() {
-        let text = if index == selected {
-            format!("> {}", option)
+    for (i, tool) in Tool::values().iter().enumerate() {
+        let text = if tool == selected_tool {
+            format!("> {}", tool.name())
         } else {
-            format!("  {}", option)
+            format!("  {}", tool.name())
         };
 
-        draw_text(&text, padding, 30.0 + (20.0 * (index as f32)), 16, font);
-    }
-
-    for (index, option) in vec!["White", "Yellow", "Red", "Green", "Blue"]
-        .iter()
-        .enumerate()
-    {
-        let text = if index == selected {
-            format!("> {}", option)
-        } else {
-            format!("  {}", option)
-        };
-
-        draw_text(&text, padding, 100.0 + (20.0 * (index as f32)), 16, font);
+        draw_text(&text, padding, 30.0 + (20.0 * (i as f32)), 16, font);
     }
 
     draw_centred_text(
