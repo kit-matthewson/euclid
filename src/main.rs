@@ -1,5 +1,11 @@
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
+mod shape;
+mod tool;
+
+use crate::shape::*;
+use crate::tool::*;
+
 fn window_conf() -> Conf {
     Conf {
         window_title: String::from("Euclid"),
@@ -7,7 +13,7 @@ fn window_conf() -> Conf {
         window_height: 0,
         high_dpi: false,
         fullscreen: true,
-        sample_count: 1,
+        sample_count: 4,
         window_resizable: false,
         icon: None,
         platform: Platform::default(),
@@ -19,44 +25,6 @@ struct ColourPalette {
     gray: Color,
     white: Color,
     yellow: Color,
-}
-
-#[allow(dead_code)]
-enum Shape {
-    Circle {
-        pos: Vec2,
-        r: f32,
-        colour: Color,
-    },
-
-    Line {
-        pos1: Vec2,
-        pos2: Vec2,
-        colour: Color,
-    },
-}
-
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-enum Tool {
-    Compass,
-    StraightEdge,
-    Arc,
-    Segment,
-}
-
-impl Tool {
-    pub fn values() -> Vec<Tool> {
-        vec![Tool::Compass, Tool::StraightEdge, Tool::Arc, Tool::Segment]
-    }
-
-    pub fn name(&self) -> &str {
-        match self {
-            Tool::Compass => "Compass",
-            Tool::StraightEdge => "Straight Edge",
-            Tool::Arc => "Arc",
-            Tool::Segment => "Segment",
-        }
-    }
 }
 
 #[macroquad::main(window_conf)]
@@ -72,58 +40,30 @@ async fn main() {
         yellow: Color::from_rgba(204, 136, 26, 255),
     };
 
-    let thickness = 1.0;
-
     let mut shapes: Vec<Shape> = Vec::new();
+    let mut points: Vec<Vec2> = Vec::new();
 
-    let mut origin: Option<Vec2> = None;
-
-    let mut current_tool = Tool::Compass;
+    let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
+    let mut current_tool = 0;
 
     loop {
         clear_background(pallette.black);
 
         let mouse = Vec2::new(mouse_position().0, mouse_position().1);
 
-        for shape in &shapes {
-            match shape {
-                Shape::Circle { pos, r, colour } => {
-                    draw_circle(*pos, *r, *colour);
-                }
-                Shape::Line { pos1, pos2, colour } => {
-                    draw_line(pos1.x, pos1.y, pos2.x, pos2.y, thickness, *colour)
-                }
-            }
+        draw_circle(mouse, 2.0, pallette.yellow);
+        for point in points.iter() {
+            draw_circle(*point, 2.0, pallette.yellow);
         }
-
-        match origin {
-            Some(pos) => {
-                draw_circle(pos, 2.0, pallette.yellow);
-                draw_circle(mouse, 2.0, pallette.yellow);
-
-                draw_circle(pos, pos.distance(mouse), pallette.gray);
-            }
-            None => (),
-        }
-
-        draw_controls(&pallette, font, &current_tool).await;
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            match origin {
-                Some(pos) => {
-                    shapes.push(get_shape(pos, mouse, pallette.white));
-                    origin = None;
-                }
-                None => origin = Some(mouse),
-            }
+            points.push(mouse);
         } else if is_mouse_button_pressed(MouseButton::Right) {
-            origin = None;
+            points.clear();
         }
 
         if is_key_pressed(KeyCode::Tab) {
-            let tool_iter = Tool::values();
-            let i = tool_iter.iter().position(|&tool| tool == current_tool).unwrap();
-            current_tool = tool_iter[(i + 1) % tool_iter.len()].clone();
+            current_tool = (current_tool + 1) % tools.len();
         }
 
         if is_key_pressed(KeyCode::Delete) {
@@ -132,23 +72,42 @@ async fn main() {
             shapes.pop();
         }
 
+        if points.len() == tools[current_tool].num_points() as usize {
+            let shape = tools[current_tool].get_shape(&points, pallette.white);
+            shapes.push(shape);
+            points.clear();
+        } else if points.len() > 0 {
+            tools[current_tool].draw_guide(&points, mouse, pallette.gray);
+        }
+
+        draw_shapes(&shapes);
+        draw_interface(&pallette, font, &tools, current_tool);
+
         next_frame().await
     }
 }
 
-fn get_shape(pos1: Vec2, pos2: Vec2, colour: Color) -> Shape {
-    Shape::Circle {
-        pos: pos1,
-        r: pos1.distance(pos2),
-        colour,
+fn draw_shapes(shapes: &Vec<Shape>) {
+    for shape in shapes {
+        match shape {
+            Shape::Circle { pos, r, colour } => {
+                draw_circle(*pos, *r, *colour);
+            }
+
+            Shape::Line {
+                points: [pos1, pos2], colour,
+            } => draw_line(pos1.x, pos1.y, pos2.x, pos2.y, 1.0, *colour),
+
+            _ => (),
+        }
     }
 }
 
-async fn draw_controls(_pallette: &ColourPalette, font: Font, selected_tool: &Tool) {
+fn draw_interface(_pallette: &ColourPalette, font: Font, tools: &Vec<&dyn Tool>, selected_tool: usize) {
     let padding = 8.0;
 
-    for (i, tool) in Tool::values().iter().enumerate() {
-        let text = if tool == selected_tool {
+    for (i, tool) in tools.iter().enumerate() {
+        let text = if i == selected_tool {
             format!("> {}", tool.name())
         } else {
             format!("  {}", tool.name())
@@ -166,7 +125,7 @@ async fn draw_controls(_pallette: &ColourPalette, font: Font, selected_tool: &To
     );
 }
 
-fn draw_circle(pos: Vec2, r: f32, colour: Color) {
+pub fn draw_circle(pos: Vec2, r: f32, colour: Color) {
     draw_poly_lines(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, 1.0, colour)
 }
 
