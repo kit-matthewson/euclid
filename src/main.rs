@@ -23,9 +23,13 @@ fn window_conf() -> Conf {
 
 struct ColourPalette {
     black: Color,
-    gray: Color,
     white: Color,
+    gray: Color,
+    red: Color,
+    green: Color,
     yellow: Color,
+    blue: Color,
+    purple: Color,
 }
 
 #[macroquad::main(window_conf)]
@@ -35,14 +39,21 @@ async fn main() {
         .unwrap();
 
     let pallette = ColourPalette {
-        black: Color::from_rgba(30, 30, 30, 255),
-        gray: Color::from_rgba(127, 112, 97, 255),
-        white: Color::from_rgba(230, 212, 163, 255),
-        yellow: Color::from_rgba(204, 136, 26, 255),
+        black: Color::from_rgba(40, 40, 40, 255),
+        white: Color::from_rgba(235, 219, 178, 255),
+        gray: Color::from_rgba(168, 154, 132, 255),
+        red: Color::from_rgba(204, 36, 29, 255),
+        green: Color::from_rgba(152, 151, 26, 255),
+        yellow: Color::from_rgba(215, 153, 33, 255),
+        blue: Color::from_rgba(69, 133, 136, 255),
+        purple: Color::from_rgba(177, 98, 134, 255),
     };
 
     let mut shapes: Vec<Shape> = Vec::new();
     let mut points: Vec<Vec2> = Vec::new();
+
+    let colours = vec![pallette.white, pallette.red, pallette.green, pallette.yellow, pallette.blue, pallette.purple];
+    let mut current_colour = 0;
 
     let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
     let mut current_tool = 0;
@@ -67,6 +78,10 @@ async fn main() {
             current_tool = (current_tool + 1) % tools.len();
         }
 
+        if is_key_pressed(KeyCode::LeftShift) {
+            current_colour = (current_colour + 1) % colours.len();
+        }
+
         if is_key_pressed(KeyCode::Delete) {
             shapes.clear();
         } else if is_key_pressed(KeyCode::Backspace) {
@@ -74,7 +89,7 @@ async fn main() {
         }
 
         if points.len() == tools[current_tool].num_points() as usize {
-            let shape = tools[current_tool].get_shape(&points, pallette.white);
+            let shape = tools[current_tool].get_shape(&points, colours[current_colour]);
             shapes.push(shape);
             points.clear();
         } else if points.len() > 0 {
@@ -82,7 +97,7 @@ async fn main() {
         }
 
         draw_shapes(&shapes);
-        draw_interface(&pallette, font, &tools, current_tool);
+        draw_interface(font, &pallette, &tools, current_tool, &colours, current_colour);
 
         next_frame().await
     }
@@ -104,7 +119,7 @@ fn draw_shapes(shapes: &Vec<Shape>) {
     }
 }
 
-fn draw_interface(_pallette: &ColourPalette, font: Font, tools: &Vec<&dyn Tool>, selected_tool: usize) {
+fn draw_interface(font: Font, pallette: &ColourPalette, tools: &Vec<&dyn Tool>, selected_tool: usize, colours: &Vec<Color>, selected_colour: usize) {
     let padding = 8.0;
 
     for (i, tool) in tools.iter().enumerate() {
@@ -114,7 +129,22 @@ fn draw_interface(_pallette: &ColourPalette, font: Font, tools: &Vec<&dyn Tool>,
             format!("  {}", tool.name())
         };
 
-        draw_text(&text, padding, 30.0 + (20.0 * (i as f32)), 16, font);
+        draw_text(&text, padding, 30.0 + (20.0 * (i as f32)), 16, font, pallette.white);
+    }
+
+    let radius = 8.0;
+
+    for (i, colour) in colours.iter().enumerate() {
+        let x = screen_width() / 2.0 + (i as f32 - (colours.len() as f32 / 2.0)) * (radius * 2.0 + padding);
+        let mut y = screen_height() - padding - radius - radius;
+
+        if i == selected_colour {
+            y -= (radius / 2.0);
+//            draw_circle(x, y, radius + 2.0, pallette.white);
+//            draw_circle(x, y, radius + 1.0, pallette.black);
+        }
+
+        draw_circle(x, y, radius, *colour);
     }
 
     draw_centred_text(
@@ -123,10 +153,11 @@ fn draw_interface(_pallette: &ColourPalette, font: Font, tools: &Vec<&dyn Tool>,
         padding + 8.0,
         16,
         font,
+        pallette.white,
     );
 }
 
-fn draw_centred_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) -> TextDimensions {
+fn draw_centred_text(text: &str, x: f32, y: f32, font_size: u16, font: Font, colour: Color) -> TextDimensions {
     let dimensions = measure_text(text, Some(font), font_size, 1.0);
 
     draw_text_ex(
@@ -136,6 +167,7 @@ fn draw_centred_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) -> 
         TextParams {
             font,
             font_size,
+            color: colour,
             ..Default::default()
         },
     );
@@ -143,7 +175,7 @@ fn draw_centred_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) -> 
     return dimensions;
 }
 
-fn draw_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) {
+fn draw_text(text: &str, x: f32, y: f32, font_size: u16, font: Font, colour: Color) {
     draw_text_ex(
         text,
         x,
@@ -151,6 +183,7 @@ fn draw_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) {
         TextParams {
             font,
             font_size,
+            color: colour,
             ..Default::default()
         },
     );
