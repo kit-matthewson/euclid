@@ -24,7 +24,6 @@ fn window_conf() -> Conf {
 struct ColourPalette {
     black: Color,
     white: Color,
-    gray: Color,
     red: Color,
     green: Color,
     yellow: Color,
@@ -39,9 +38,8 @@ async fn main() {
         .unwrap();
 
     let pallette = ColourPalette {
-        black: Color::from_rgba(40, 40, 40, 255),
+        black: Color::from_rgba(10, 10, 10, 255),
         white: Color::from_rgba(235, 219, 178, 255),
-        gray: Color::from_rgba(168, 154, 132, 255),
         red: Color::from_rgba(204, 36, 29, 255),
         green: Color::from_rgba(152, 151, 26, 255),
         yellow: Color::from_rgba(215, 153, 33, 255),
@@ -63,7 +61,6 @@ async fn main() {
 
         let mouse = Vec2::new(mouse_position().0, mouse_position().1);
 
-        utils::draw_circle(mouse, 2.0, pallette.yellow);
         for point in points.iter() {
             utils::draw_circle(*point, 2.0, pallette.yellow);
         }
@@ -96,6 +93,8 @@ async fn main() {
             tools[current_tool].draw_guide(&points, mouse, set_opacity(colours[current_colour], 0.4));
         }
 
+        utils::draw_circle(mouse, 2.0, pallette.yellow);
+
         draw_shapes(&shapes);
         draw_interface(font, &pallette, &tools, current_tool, &colours, current_colour);
 
@@ -125,15 +124,19 @@ fn draw_shapes(shapes: &Vec<Shape>) {
 
 fn draw_interface(font: Font, pallette: &ColourPalette, tools: &Vec<&dyn Tool>, selected_tool: usize, colours: &Vec<Color>, selected_colour: usize) {
     let padding = 8.0;
+    let font_size = 12.0;
 
     for (i, tool) in tools.iter().enumerate() {
+        let x = padding;
+        let y = 30.0 + (font_size * (i as f32));
+
         let text = if i == selected_tool {
             format!("> {}", tool.name())
         } else {
             format!("  {}", tool.name())
         };
 
-        draw_text(&text, padding, 30.0 + (20.0 * (i as f32)), 16, font, pallette.white);
+        draw_text(&text, x, y, font_size as u16, font, pallette.white);
     }
 
     let radius = 8.0;
