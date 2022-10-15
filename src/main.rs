@@ -93,7 +93,7 @@ async fn main() {
             shapes.push(shape);
             points.clear();
         } else if points.len() > 0 {
-            tools[current_tool].draw_guide(&points, mouse, pallette.gray);
+            tools[current_tool].draw_guide(&points, mouse, set_opacity(colours[current_colour], 0.4));
         }
 
         draw_shapes(&shapes);
@@ -101,6 +101,10 @@ async fn main() {
 
         next_frame().await
     }
+}
+
+fn set_opacity(colour: Color, a: f32) -> Color {
+    Color::new(colour.r, colour.g, colour.b, a)
 }
 
 fn draw_shapes(shapes: &Vec<Shape>) {
@@ -139,9 +143,7 @@ fn draw_interface(font: Font, pallette: &ColourPalette, tools: &Vec<&dyn Tool>, 
         let mut y = screen_height() - padding - radius - radius;
 
         if i == selected_colour {
-            y -= (radius / 2.0);
-//            draw_circle(x, y, radius + 2.0, pallette.white);
-//            draw_circle(x, y, radius + 1.0, pallette.black);
+            y -= radius / 2.0;
         }
 
         draw_circle(x, y, radius, *colour);
