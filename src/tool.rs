@@ -1,7 +1,6 @@
 use macroquad::prelude::{Vec2, Color};
 
-use crate::shape::Shape;
-use crate::draw_circle;
+use crate::{shape::Shape, utils};
 
 pub trait Tool {
     fn name(&self) -> &str;
@@ -23,7 +22,7 @@ impl Tool for Compass {
     }
 
     fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
-        draw_circle(points[0], points[0].distance(mouse), colour);
+        utils::draw_circle(points[0], points[0].distance(mouse), colour);
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
@@ -45,10 +44,10 @@ impl Tool for StraightEdge {
     }
 
     fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
-        todo!()
+        utils::draw_line(points[0], mouse, colour);
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        todo!()
+        Shape::Line { points: [points[0], points[1]], colour }
     }
 }

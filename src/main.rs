@@ -1,5 +1,6 @@
 use macroquad::{miniquad::conf::Platform, prelude::*};
 
+mod utils;
 mod shape;
 mod tool;
 
@@ -51,9 +52,9 @@ async fn main() {
 
         let mouse = Vec2::new(mouse_position().0, mouse_position().1);
 
-        draw_circle(mouse, 2.0, pallette.yellow);
+        utils::draw_circle(mouse, 2.0, pallette.yellow);
         for point in points.iter() {
-            draw_circle(*point, 2.0, pallette.yellow);
+            utils::draw_circle(*point, 2.0, pallette.yellow);
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
@@ -91,12 +92,12 @@ fn draw_shapes(shapes: &Vec<Shape>) {
     for shape in shapes {
         match shape {
             Shape::Circle { pos, r, colour } => {
-                draw_circle(*pos, *r, *colour);
+                utils::draw_circle(*pos, *r, *colour);
             }
 
             Shape::Line {
                 points: [pos1, pos2], colour,
-            } => draw_line(pos1.x, pos1.y, pos2.x, pos2.y, 1.0, *colour),
+            } => utils::draw_line(*pos1, *pos2, *colour),
 
             _ => (),
         }
@@ -123,10 +124,6 @@ fn draw_interface(_pallette: &ColourPalette, font: Font, tools: &Vec<&dyn Tool>,
         16,
         font,
     );
-}
-
-pub fn draw_circle(pos: Vec2, r: f32, colour: Color) {
-    draw_poly_lines(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, 1.0, colour)
 }
 
 fn draw_centred_text(text: &str, x: f32, y: f32, font_size: u16, font: Font) -> TextDimensions {
