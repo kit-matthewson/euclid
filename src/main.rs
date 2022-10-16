@@ -24,6 +24,7 @@ fn window_conf() -> Conf {
 struct ColourPalette {
     black: Color,
     white: Color,
+    gray: Color,
     red: Color,
     green: Color,
     yellow: Color,
@@ -40,6 +41,7 @@ async fn main() {
     let pallette = ColourPalette {
         black: Color::from_rgba(10, 10, 10, 255),
         white: Color::from_rgba(235, 219, 178, 255),
+        gray: Color::from_rgba(168, 154, 132, 255),
         red: Color::from_rgba(204, 36, 29, 255),
         green: Color::from_rgba(152, 151, 26, 255),
         yellow: Color::from_rgba(215, 153, 33, 255),
@@ -48,9 +50,10 @@ async fn main() {
     };
 
     let mut shapes: Vec<Shape> = Vec::new();
+    let mut intersections: Vec<Vec2> = Vec::new();
     let mut points: Vec<Vec2> = Vec::new();
 
-    let colours = vec![pallette.white, pallette.red, pallette.green, pallette.yellow, pallette.blue, pallette.purple];
+    let colours = vec![pallette.white, pallette.gray, pallette.red, pallette.green, pallette.yellow, pallette.blue, pallette.purple];
     let mut current_colour = 0;
 
     let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
@@ -63,6 +66,10 @@ async fn main() {
 
         for point in points.iter() {
             utils::draw_circle(*point, 2.0, pallette.yellow);
+        }
+
+        for intersection in intersections.iter() {
+            utils::draw_circle(*intersection, 2.0, pallette.red)
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
@@ -81,12 +88,28 @@ async fn main() {
 
         if is_key_pressed(KeyCode::Delete) {
             shapes.clear();
+            intersections.clear();
         } else if is_key_pressed(KeyCode::Backspace) {
-            shapes.pop();
+            if shapes.len() == 0 {
+                break;
+            }
+
+            let shape = shapes.pop().unwrap();
+
+            for b in &shapes {
+                for _ in 0..find_intersection(&shape, b).len() {
+                    intersections.pop();
+                }
+            }
         }
 
         if points.len() == tools[current_tool].num_points() as usize {
             let shape = tools[current_tool].get_shape(&points, colours[current_colour]);
+
+            for b in &shapes {
+                intersections.append(find_intersection(&shape, b).as_mut());
+            }
+
             shapes.push(shape);
             points.clear();
         } else if points.len() > 0 {
