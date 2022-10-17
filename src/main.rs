@@ -59,17 +59,30 @@ async fn main() {
     let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
     let mut current_tool = 0;
 
+    let snap_radius = 30.0;
+
     loop {
         clear_background(pallette.black);
 
-        let mouse = Vec2::new(mouse_position().0, mouse_position().1);
+        let mut mouse = Vec2::new(mouse_position().0, mouse_position().1);
+        utils::draw_circle(mouse, 2.0, pallette.gray);
+
+        let mut distance = f32::MAX;
+        for intersection in intersections.iter() {
+            utils::draw_circle(*intersection, 2.0, pallette.red);
+
+            let sqr_dist_to_mouse = intersection.distance_squared(mouse);
+            if sqr_dist_to_mouse < snap_radius * snap_radius && sqr_dist_to_mouse < distance {
+                distance = sqr_dist_to_mouse;
+                mouse = *intersection;
+            }
+        }
+
+        draw_line(mouse.x, mouse.y, mouse_position().0, mouse_position().1, 1.0, pallette.gray);
+        utils::draw_circle(mouse, 2.0, pallette.yellow);
 
         for point in points.iter() {
             utils::draw_circle(*point, 2.0, pallette.yellow);
-        }
-
-        for intersection in intersections.iter() {
-            utils::draw_circle(*intersection, 2.0, pallette.red)
         }
 
         if is_mouse_button_pressed(MouseButton::Left) {
@@ -82,7 +95,9 @@ async fn main() {
             current_tool = (current_tool + 1) % tools.len();
         }
 
-        if is_key_pressed(KeyCode::LeftShift) {
+        if mouse_wheel().1 < 0.0 {
+            current_colour = (current_colour + (colours.len() - 1)) % colours.len();
+        } else if mouse_wheel().1 > 0.0 {
             current_colour = (current_colour + 1) % colours.len();
         }
 
@@ -115,8 +130,6 @@ async fn main() {
         } else if points.len() > 0 {
             tools[current_tool].draw_guide(&points, mouse, set_opacity(colours[current_colour], 0.4));
         }
-
-        utils::draw_circle(mouse, 2.0, pallette.yellow);
 
         draw_shapes(&shapes);
         draw_interface(font, &pallette, &tools, current_tool, &colours, current_colour);
