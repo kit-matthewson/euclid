@@ -97,7 +97,7 @@ async fn main() {
 
         if mouse_wheel().1 < 0.0 {
             current_colour = (current_colour + (colours.len() - 1)) % colours.len();
-        } else if mouse_wheel().1 > 0.0 {
+        } else if mouse_wheel().1 > 0.0 || is_key_pressed(KeyCode::LeftShift) {
             current_colour = (current_colour + 1) % colours.len();
         }
 
