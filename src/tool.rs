@@ -1,4 +1,4 @@
-use macroquad::prelude::{Vec2, Color};
+use macroquad::prelude::{Color, Vec2};
 
 use crate::{shape::Shape, utils};
 
@@ -48,6 +48,9 @@ impl Tool for StraightEdge {
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        Shape::Line { points: [points[0], points[1]], colour }
+        Shape::Line {
+            points: [points[0], points[1]],
+            colour,
+        }
     }
 }
