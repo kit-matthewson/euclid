@@ -1,5 +1,4 @@
 use macroquad::prelude::*;
-use std::prelude::*;
 
 #[allow(dead_code)]
 pub enum Shape {
@@ -24,7 +23,10 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
             if p1.distance_squared(*p2) > (r1 + r2) * (r1 + r2)  {
                 Vec::new()
             } else {
-                vec![p1]
+                let m = (p2.x - p1.x) / (p1.y - p2.y);
+                let c = ((p1.x * p1.x) + (p1.y * p1.y) - (p2.x * p2.x) - (p2.y * p2.y) - (r1 * r1) + (r2 * r2)) / (2.0 * (p1.y - p2.y));
+
+                find_circle_intersections(p1, r1, &Shape::Line { points: [Vec2::new(0.0, c), Vec2::new(1.0, m + c)], colour: Color::default() })
             }
         },
         

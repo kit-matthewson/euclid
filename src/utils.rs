@@ -1,7 +1,7 @@
 use macroquad::prelude::{Vec2, Color, screen_height, screen_width};
 
 pub fn draw_circle(pos: Vec2, r: f32, colour: Color) {
-    macroquad::prelude::draw_poly_lines(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, 1.0, colour)
+    macroquad::prelude::draw_poly_lines(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, 2.0, colour)
 }
 
 pub fn draw_line(p1: Vec2, p2: Vec2, colour: Color) {
@@ -29,8 +29,8 @@ pub fn draw_line(p1: Vec2, p2: Vec2, colour: Color) {
 
     if solutions.len() == 2 {
         let (m1, m2) = (solutions[0], solutions[1]);
-        macroquad::prelude::draw_line(m1.x, m1.y, m2.x, m2.y, 1.0, colour);
+        macroquad::prelude::draw_line(m1.x, m1.y, m2.x, m2.y, 2.0, colour);
     } else {
-        macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, 1.0, colour);
+        macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, 2.0, colour);
     }
 }

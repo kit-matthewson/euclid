@@ -14,7 +14,7 @@ fn window_conf() -> Conf {
         window_height: 0,
         high_dpi: false,
         fullscreen: true,
-        sample_count: 4,
+        sample_count: 0,
         window_resizable: false,
         icon: None,
         platform: Platform::default(),
@@ -41,7 +41,7 @@ async fn main() {
     let pallette = ColourPalette {
         black: Color::from_rgba(10, 10, 10, 255),
         white: Color::from_rgba(235, 219, 178, 255),
-        gray: Color::from_rgba(168, 154, 132, 255),
+        gray: Color::from_rgba(168, 154, 132, 200),
         red: Color::from_rgba(204, 36, 29, 255),
         green: Color::from_rgba(152, 151, 26, 255),
         yellow: Color::from_rgba(215, 153, 33, 255),
@@ -105,15 +105,13 @@ async fn main() {
             shapes.clear();
             intersections.clear();
         } else if is_key_pressed(KeyCode::Backspace) {
-            if shapes.len() == 0 {
-                break;
-            }
+            if shapes.len() > 0 {
+                let shape = shapes.pop().unwrap();
 
-            let shape = shapes.pop().unwrap();
-
-            for b in &shapes {
-                for _ in 0..find_intersection(&shape, b).len() {
-                    intersections.pop();
+                for b in &shapes {
+                    for _ in 0..find_intersection(&shape, b).len() {
+                        intersections.pop();
+                    }
                 }
             }
         }
