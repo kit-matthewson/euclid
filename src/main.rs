@@ -59,7 +59,7 @@ async fn main() {
     let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
     let mut current_tool = 0;
 
-    let snap_radius = 30.0;
+    let snap_radius = 15.0;
 
     loop {
         clear_background(pallette.black);
