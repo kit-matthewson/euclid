@@ -1,4 +1,5 @@
 use macroquad::prelude::*;
+use std::prelude::*;
 
 #[allow(dead_code)]
 pub enum Shape {
@@ -26,7 +27,29 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
                 vec![p1]
             }
         },
-        Shape::Line { points: [_p1, _p2], colour: _ } => todo!(),
+        
+        Shape::Line { points: [q1, q2], colour: _ } => {
+            let m = (q1.y - q2.y) / (q1.x - q2.x);
+            let c = -m * q1.x + q1.y;
+
+            let d = ((m * m + 1.0) * (r1 * r1)) - f32::powi(p1.x * m - p1.y + c, 2);
+
+            if d >= 0.0 {
+                let t = p1.x + (p1.y * m) - (c * m);
+                let u = 1.0 + (m * m);
+
+                let x1 = (t - f32::sqrt(d)) / u;
+                let x2 = (t + f32::sqrt(d)) / u;
+
+                let y1 = m * x1 + c;
+                let y2 = m * x2 + c;
+
+                vec![Vec2::new(x1, y1), Vec2::new(x2, y2)]
+            } else {
+                Vec::new()
+            }
+
+        },
         Shape::LineSegment { points: _, colour: _ } => todo!(),
         Shape::Arc { points: _, colour: _ } => todo!(),
     }
