@@ -67,34 +67,10 @@ async fn main() {
 
     let mut current_colour = 0;
 
-    let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge];
+    let tools: Vec<&dyn Tool> = vec![&Compass, &StraightEdge, &LineSegment];
     let mut current_tool = 0;
 
     let snap_radius = 15.0;
-
-    add_shape(
-        Shape::Line {
-            points: [
-                Vec2::new(-1.0, screen_height() / 2.0),
-                Vec2::new(1.0, screen_height() / 2.0),
-            ],
-            colour: pallette.white,
-        },
-        &mut shapes,
-        &mut intersections,
-    );
-
-    add_shape(
-        Shape::Line {
-            points: [
-                Vec2::new(screen_width() / 2.0, -1.0),
-                Vec2::new(screen_width() / 2.0, 1.0),
-            ],
-            colour: pallette.white,
-        },
-        &mut shapes,
-        &mut intersections,
-    );
 
     loop {
         clear_background(pallette.black);
@@ -102,12 +78,16 @@ async fn main() {
         let mut mouse = Vec2::new(mouse_position().0, mouse_position().1);
         utils::draw_circle(mouse, 2.0, pallette.gray);
 
-        let mut distance = f32::MAX;
+        let mut max_distance = f32::MAX;
         for intersection in intersections.iter() {
-            let sqr_dist_to_mouse = intersection.distance_squared(mouse);
-            if sqr_dist_to_mouse < snap_radius * snap_radius && sqr_dist_to_mouse < distance {
-                distance = sqr_dist_to_mouse;
+            let distance = intersection.distance(mouse);
+            if distance < snap_radius && distance < max_distance {
+                max_distance = distance;
                 mouse = *intersection;
+            }
+
+            if show_interface {
+                utils::draw_circle(*intersection, 2.0, pallette.red);
             }
         }
 
@@ -195,11 +175,6 @@ fn add_shape(shape: Shape, shapes: &mut Vec<Shape>, intersections: &mut Vec<Vec2
         intersections.append(find_intersection(&shape, b).as_mut());
     }
 
-    for int in intersections.iter() {
-        println!("{}, {}", screen_width() / 2.0, screen_height() / 2.0);
-        println!("{}, {}", int.x, int.y);
-    }
-
     shapes.push(shape);
 }
 
@@ -214,6 +189,11 @@ fn draw_shapes(shapes: &Vec<Shape>) {
                 points: [pos1, pos2],
                 colour,
             } => utils::draw_line(*pos1, *pos2, *colour),
+
+            Shape::LineSegment {
+                points: [pos1, pos2],
+                colour,
+            } => utils::draw_segment(*pos1, *pos2, *colour),
 
             _ => (),
         }

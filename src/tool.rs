@@ -11,6 +11,7 @@ pub trait Tool {
 
 pub struct Compass;
 pub struct StraightEdge;
+pub struct LineSegment;
 
 impl Tool for Compass {
     fn name(&self) -> &str {
@@ -52,5 +53,23 @@ impl Tool for StraightEdge {
             points: [points[0], points[1]],
             colour,
         }
+    }
+}
+
+impl Tool for LineSegment {
+    fn name(&self) -> &str {
+        "Line Segment"
+    }
+
+    fn num_points(&self) -> i8 {
+        2
+    }
+
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
+        utils::draw_segment(points[0], mouse, colour);
+    }
+
+    fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
+        Shape::LineSegment { points: [points[0], points[1]], colour: colour }
     }
 }

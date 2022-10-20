@@ -43,3 +43,7 @@ pub fn draw_line(p1: Vec2, p2: Vec2, colour: Color) {
         macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, 2.0, colour);
     }
 }
+
+pub fn draw_segment(p1: Vec2, p2: Vec2, colour: Color) {
+    macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, 2.0, colour)
+}

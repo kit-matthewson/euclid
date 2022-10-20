@@ -11,14 +11,28 @@ pub enum Shape {
 pub fn find_intersection(a: &Shape, b: &Shape) -> Vec<Vec2> {
     match a {
         Shape::Circle { pos, r, colour: _ } => find_circle_intersections(*pos, *r, b),
+
         Shape::Line {
             points: [p1, p2],
             colour: _,
         } => find_line_intersection(*p1, *p2, b),
+
         Shape::LineSegment {
-            points: _points,
+            points: [p1, p2],
             colour: _,
-        } => todo!(),
+        } => {
+            let intersections = find_intersection(&Shape::Line { points: [*p1, *p2], colour: Color::default() }, b);
+            let mut valid = Vec::new();
+
+            for intersection in intersections {
+                if ((p1.x < intersection.x && intersection.x < p2.x) || (p1.x > intersection.x && intersection.x > p2.x)) &&
+                   ((p1.y < intersection.y && intersection.y < p2.y) || (p1.y > intersection.y && intersection.y > p2.y)) {
+                    valid.push(intersection);
+                }
+            }
+
+            return valid;
+        },
         Shape::Arc {
             points: _points,
             colour: _,
@@ -76,10 +90,12 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
                 Vec::new()
             }
         }
+
         Shape::LineSegment {
             points: _,
             colour: _,
-        } => todo!(),
+        } => find_intersection(b, &Shape::Circle { pos: p1, r: r1, colour: Color::default() }),
+
         Shape::Arc {
             points: _,
             colour: _,
@@ -130,7 +146,8 @@ fn find_line_intersection(p1: Vec2, p2: Vec2, b: &Shape) -> Vec<Vec2> {
         Shape::LineSegment {
             points: _,
             colour: _,
-        } => todo!(),
+        } => find_intersection(b, &Shape::Line { points: [p1, p2], colour: Color::default() }),
+
         Shape::Arc {
             points: _,
             colour: _,
