@@ -21,7 +21,13 @@ pub fn find_intersection(a: &Shape, b: &Shape) -> Vec<Vec2> {
             points: [p1, p2],
             colour: _,
         } => {
-            let intersections = find_intersection(&Shape::Line { points: [*p1, *p2], colour: Color::default() }, b);
+            let intersections = find_intersection(
+                &Shape::Line {
+                    points: [*p1, *p2],
+                    colour: Color::default(),
+                },
+                b,
+            );
             let mut valid = Vec::new();
 
             for intersection in intersections {
@@ -32,7 +38,8 @@ pub fn find_intersection(a: &Shape, b: &Shape) -> Vec<Vec2> {
             }
 
             return valid;
-        },
+        }
+
         Shape::Arc {
             points: _points,
             colour: _,
@@ -51,18 +58,28 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
                 Vec::new()
             } else {
                 let m = (p2.x - p1.x) / (p1.y - p2.y);
-                let c = ((p1.x * p1.x) + (p1.y * p1.y) - (p2.x * p2.x) - (p2.y * p2.y) - (r1 * r1)
-                    + (r2 * r2))
-                    / (2.0 * (p1.y - p2.y));
 
-                find_circle_intersections(
-                    p1,
-                    r1,
+                if m.is_infinite() {
+                    return find_circle_intersections(
+                        p1, r1,
+                        &Shape::Line {
+                            points: [Vec2::new(p1.x, 0.0), Vec2::new(p1.x, 1.0)],
+                            colour: Color::default(),
+                        },
+                    );
+                }
+
+                let c = ((p1.x * p1.x) + (p1.y * p1.y) - (p2.x * p2.x) - (p2.y * p2.y) - (r1 * r1)
+                         + (r2 * r2))
+                        / (2.0 * (p1.y - p2.y));
+
+                return find_circle_intersections(
+                    p1, r1,
                     &Shape::Line {
                         points: [Vec2::new(0.0, c), Vec2::new(1.0, m + c)],
                         colour: Color::default(),
                     },
-                )
+                );
             }
         }
 
@@ -72,6 +89,19 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
         } => {
             let m = (q1.y - q2.y) / (q1.x - q2.x);
             let c = -m * q1.x + q1.y;
+
+            if m.is_infinite() {
+                let d = (-(p1.x * p1.x)) + (2.0 * p1.x * q1.x) + (r1 * r1) - (q1.x * q1.x);
+
+                if d >= 0.0 {
+                    let y1 = p1.y + f32::sqrt(d);
+                    let y2 = p1.y - f32::sqrt(d);
+
+                    return vec![Vec2::new(q1.x, y1), Vec2::new(q1.x, y2)];
+                } else {
+                    return Vec::new();
+                }
+            }
 
             let d = ((m * m + 1.0) * (r1 * r1)) - f32::powi(p1.x * m - p1.y + c, 2);
 
@@ -85,16 +115,23 @@ fn find_circle_intersections(p1: Vec2, r1: f32, b: &Shape) -> Vec<Vec2> {
                 let y1 = m * x1 + c;
                 let y2 = m * x2 + c;
 
-                vec![Vec2::new(x1, y1), Vec2::new(x2, y2)]
+                return vec![Vec2::new(x1, y1), Vec2::new(x2, y2)];
             } else {
-                Vec::new()
+                return Vec::new();
             }
         }
 
         Shape::LineSegment {
             points: _,
             colour: _,
-        } => find_intersection(b, &Shape::Circle { pos: p1, r: r1, colour: Color::default() }),
+        } => find_intersection(
+            b,
+            &Shape::Circle {
+                pos: p1,
+                r: r1,
+                colour: Color::default(),
+            },
+        ),
 
         Shape::Arc {
             points: _,
@@ -113,7 +150,7 @@ fn find_line_intersection(p1: Vec2, p2: Vec2, b: &Shape) -> Vec<Vec2> {
                 colour: Color::default(),
             },
         ),
-        
+
         Shape::Line {
             points: [q1, q2],
             colour: _,
@@ -130,23 +167,27 @@ fn find_line_intersection(p1: Vec2, p2: Vec2, b: &Shape) -> Vec<Vec2> {
 
             if m1.is_infinite() {
                 x = p1.x;
-            } else if m2.is_infinite() {
+                y = (m2 * x) - (m2 * q1.x) + q1.y;
+            }
+
+            if m2.is_infinite() {
                 x = q1.x;
+                y = (m1 * x) - (m1 * p1.x) + p1.y;
             }
 
-            if m1 == 0.0 {
-                y = p1.y;
-            } else if m2 == 0.0 {
-                y = q1.y;
-            }
-
-            vec![Vec2::new(x, y)]
+            return vec![Vec2::new(x, y)];
         }
 
         Shape::LineSegment {
             points: _,
             colour: _,
-        } => find_intersection(b, &Shape::Line { points: [p1, p2], colour: Color::default() }),
+        } => find_intersection(
+            b,
+            &Shape::Line {
+                points: [p1, p2],
+                colour: Color::default(),
+            },
+        ),
 
         Shape::Arc {
             points: _,

@@ -55,6 +55,8 @@ async fn main() {
     let mut intersections: Vec<Vec2> = Vec::new();
     let mut points: Vec<Vec2> = Vec::new();
 
+    let mut undo_queue: Vec<Shape> = Vec::new();
+
     let colours = vec![
         pallette.white,
         pallette.gray,
@@ -72,32 +74,68 @@ async fn main() {
 
     let snap_radius = 15.0;
 
+    let axis = true;
+    let axis_opacity = 0.2;
+
+    if axis {
+        add_shape(
+                Shape::Line {
+                    points: [
+                        Vec2::new(-1.0, screen_height() / 2.0),
+                        Vec2::new(1.0,  screen_height() / 2.0),
+                        ],
+                    colour: set_opacity(pallette.red, axis_opacity),
+                },
+        &mut shapes,
+        &mut intersections,
+        );
+
+        add_shape(
+                Shape::Line {
+                    points: [
+                        Vec2::new(screen_width() / 2.0, -1.0),
+                        Vec2::new(screen_width() / 2.0, 1.0),
+                        ],
+                    colour: set_opacity(pallette.green, axis_opacity),
+                },
+        &mut shapes,
+        &mut intersections,
+        );
+    }
+
     loop {
-        clear_background(pallette.black);
-
         let mut mouse = Vec2::new(mouse_position().0, mouse_position().1);
-        utils::draw_circle(mouse, 2.0, pallette.gray);
 
-        let mut max_distance = f32::MAX;
+        clear_background(pallette.black);
+        draw_shapes(&shapes);
+
+        if show_interface {
+            utils::draw_circle(mouse, 2.0, pallette.gray);
+        }
+
+        let mut max_distance = snap_radius;
         for intersection in intersections.iter() {
+
             let distance = intersection.distance(mouse);
+
             if distance < snap_radius && distance < max_distance {
                 max_distance = distance;
                 mouse = *intersection;
             }
 
             if show_interface {
+                utils::draw_circle(*intersection, 1.0, pallette.red);
                 utils::draw_circle(*intersection, 2.0, pallette.red);
             }
         }
 
         draw_line(
-            mouse.x,
-            mouse.y,
-            mouse_position().0,
-            mouse_position().1,
-            1.0,
-            pallette.gray,
+                mouse.x,
+        mouse.y,
+        mouse_position().0,
+        mouse_position().1,
+        1.0,
+        pallette.gray,
         );
 
         utils::draw_circle(mouse, 2.0, pallette.yellow);
@@ -127,10 +165,13 @@ async fn main() {
         }
 
         if is_key_pressed(KeyCode::Delete) {
+            shapes.reverse();
+            undo_queue.append(&mut shapes);
+
             shapes.clear();
             intersections.clear();
         } else if is_key_pressed(KeyCode::Backspace) {
-            if shapes.len() > 0 {
+            if !shapes.is_empty() {
                 let shape = shapes.pop().unwrap();
 
                 for b in &shapes {
@@ -138,7 +179,13 @@ async fn main() {
                         intersections.pop();
                     }
                 }
+
+                undo_queue.push(shape);
             }
+        }
+
+        if is_key_pressed(KeyCode::U) && !undo_queue.is_empty() {
+            add_shape(undo_queue.pop().unwrap(), &mut shapes, &mut intersections);
         }
 
         if points.len() == tools[current_tool].num_points() as usize {
@@ -153,8 +200,6 @@ async fn main() {
             );
         }
 
-        draw_shapes(&shapes);
-
         if show_interface {
             draw_interface(
                 font,
@@ -163,6 +208,8 @@ async fn main() {
                 current_tool,
                 &colours,
                 current_colour,
+                &shapes,
+                &intersections,
             );
         }
 
@@ -207,6 +254,8 @@ fn draw_interface(
     selected_tool: usize,
     colours: &Vec<Color>,
     selected_colour: usize,
+    shapes: &Vec<Shape>,
+    intersections: &Vec<Vec2>,
 ) {
     let padding = 16.0;
     let font_size = 12.0;
@@ -232,6 +281,11 @@ fn draw_interface(
 
         draw_text(&text, x, y, font_size as u16, font, pallette.white);
     }
+
+    let y = padding + ((font_size + 2.0) * (tools.len() as f32 + 3.0));
+
+    draw_text(&format!("Shapes: {}", shapes.len()).to_string(), padding, y, font_size as u16, font, pallette.white);
+    draw_text(&format!("Intersections: {}", intersections.len()).to_string(), padding, y + font_size + 2.0, font_size as u16, font, pallette.white);
 
     let radius = 8.0;
 

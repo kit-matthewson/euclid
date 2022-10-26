@@ -70,6 +70,9 @@ impl Tool for LineSegment {
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        Shape::LineSegment { points: [points[0], points[1]], colour: colour }
+        Shape::LineSegment {
+            points: [points[0], points[1]],
+            colour: colour,
+        }
     }
 }
