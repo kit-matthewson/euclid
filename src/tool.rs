@@ -1,12 +1,12 @@
 use macroquad::prelude::{Color, Vec2};
 
-use crate::{shape::Shape, utils};
+use crate::{shapes::*, utils};
 
 pub trait Tool {
     fn name(&self) -> &str;
     fn num_points(&self) -> u8;
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32);
-    fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape;
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32);
+    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction;
 }
 
 pub struct Compass;
@@ -22,15 +22,18 @@ impl Tool for Compass {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
-        utils::draw_circle(points[0], points[0].distance(mouse), colour, thickness);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32) {
+        utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
     }
 
-    fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        Shape::Circle {
-            pos: points[0],
-            r: points[0].distance(points[1]),
-            colour,
+    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
+        Construction {
+            shape: Shape::Circle(CircleData {
+                pos: points[0],
+                r: points[0].distance(points[1]),
+            }),
+
+            color,
         }
     }
 }
@@ -44,14 +47,18 @@ impl Tool for StraightEdge {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
-        utils::draw_line(points[0], mouse, colour, thickness);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32) {
+        utils::draw_line(points[0], mouse, color, thickness);
     }
 
-    fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        Shape::Line {
-            points: [points[0], points[1]],
-            colour,
+    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
+        Construction {
+            shape: Shape::Line(LineData {
+                p1: points[0],
+                p2: points[1],
+            }),
+
+            color,
         }
     }
 }
@@ -65,14 +72,18 @@ impl Tool for LineSegment {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
-        utils::draw_segment(points[0], mouse, colour, thickness);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32) {
+        utils::draw_segment(points[0], mouse, color, thickness);
     }
 
-    fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
-        Shape::LineSegment {
-            points: [points[0], points[1]],
-            colour: colour,
+    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
+        Construction {
+            shape: Shape::Segment(SegmentData {
+                p1: points[0],
+                p2: points[1],
+            }),
+
+            color,
         }
     }
 }

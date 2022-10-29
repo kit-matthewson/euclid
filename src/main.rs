@@ -1,5 +1,5 @@
 mod euclid;
-mod shape;
+mod shapes;
 mod tool;
 mod utils;
 

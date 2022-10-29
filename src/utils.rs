@@ -1,6 +1,6 @@
 use macroquad::prelude::{screen_height, screen_width, Color, Vec2};
 
-pub fn draw_circle(pos: Vec2, r: f32, colour: Color, thickness: f32) {
+pub fn draw_circle(pos: Vec2, r: f32, color: Color, thickness: f32) {
     macroquad::prelude::draw_poly_lines(
         pos.x,
         pos.y,
@@ -8,15 +8,15 @@ pub fn draw_circle(pos: Vec2, r: f32, colour: Color, thickness: f32) {
         r,
         0.0,
         thickness,
-        colour,
+        color,
     )
 }
 
-pub fn draw_filled_circle(pos: Vec2, r: f32, colour: Color) {
-    macroquad::prelude::draw_poly(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, colour)
+pub fn draw_filled_circle(pos: Vec2, r: f32, color: Color) {
+    macroquad::prelude::draw_poly(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, color)
 }
 
-pub fn draw_line(p1: Vec2, p2: Vec2, colour: Color, thickness: f32) {
+pub fn draw_line(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {
     let (a, b) = (p1.x, p1.y);
     let (m, n) = (p2.x, p2.y);
 
@@ -50,16 +50,16 @@ pub fn draw_line(p1: Vec2, p2: Vec2, colour: Color, thickness: f32) {
 
     if solutions.len() == 2 {
         let (m1, m2) = (solutions[0], solutions[1]);
-        macroquad::prelude::draw_line(m1.x, m1.y, m2.x, m2.y, thickness, colour);
+        macroquad::prelude::draw_line(m1.x, m1.y, m2.x, m2.y, thickness, color);
     } else {
-        macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, colour);
+        macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
     }
 }
 
-pub fn draw_segment(p1: Vec2, p2: Vec2, colour: Color, thickness: f32) {
-    macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, colour)
+pub fn draw_segment(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {
+    macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
 }
 
-pub fn set_opacity(colour: Color, a: f32) -> Color {
-    Color::new(colour.r, colour.g, colour.b, a)
+pub fn set_opacity(color: Color, a: f32) -> Color {
+    Color::new(color.r, color.g, color.b, a)
 }

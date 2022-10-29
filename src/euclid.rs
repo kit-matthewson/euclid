@@ -1,5 +1,10 @@
-use crate::{shape::*, tool::*, utils};
 use macroquad::prelude::*;
+
+use crate::{
+    shapes::*,
+    tool::*,
+    utils,
+};
 
 pub struct ColorPalette {
     pub black: Color,
@@ -26,7 +31,7 @@ pub struct Options {
     snap_radius: f32,
     line_thickness: f32,
     point_size: f32,
-    guide_alpha_cutoff: u8,
+    guide_a: f32,
 
     show_interface: bool,
     show_intersections: bool,
@@ -37,10 +42,10 @@ pub struct Options {
 }
 
 pub struct Euclid {
-    shapes: Vec<Shape>,
+    constructions: Vec<Construction>,
     intersections: Vec<Vec2>,
     points: Vec<Vec2>,
-    undo_queue: Vec<Shape>,
+    undo_queue: Vec<Construction>,
     tools: Vec<&'static dyn Tool>,
 
     style: Style,
@@ -50,7 +55,7 @@ pub struct Euclid {
 impl Euclid {
     pub fn new(palette: ColorPalette, font: Font) -> Euclid {
         Euclid {
-            shapes: Vec::new(),
+            constructions: Vec::new(),
             intersections: Vec::new(),
             points: Vec::new(),
             undo_queue: Vec::new(),
@@ -80,7 +85,7 @@ impl Euclid {
                 show_intersections: true,
                 show_guides: true,
 
-                guide_alpha_cutoff: 200,
+                guide_a: 0.75,
 
                 snap_radius: 15.0,
                 line_thickness: 1.0,
@@ -135,12 +140,12 @@ impl Euclid {
         }
 
         if self.points.len() as u8 == self.tools[self.options.current_tool_index].num_points() {
-            let shape = self.tools[self.options.current_tool_index].get_shape(
+            let shape = self.tools[self.options.current_tool_index].get_construction(
                 &self.points,
                 self.style.tool_colors[self.options.current_color_index],
             );
 
-            self.add_shape(shape);
+            self.add_construction(shape);
             self.points.clear();
         }
 
@@ -155,11 +160,11 @@ impl Euclid {
 
         match get_last_key_pressed() {
             Some(KeyCode::Backspace) => {
-                if !self.shapes.is_empty() {
-                    let removed = self.shapes.pop().unwrap();
+                if !self.constructions.is_empty() {
+                    let removed = self.constructions.pop().unwrap();
 
-                    for other in self.shapes.iter() {
-                        for _ in find_intersections(&removed, other) {
+                    for other in self.constructions.iter() {
+                        for _ in removed.shape.intersections(&other.shape) {
                             self.intersections.pop();
                         }
                     }
@@ -190,35 +195,9 @@ impl Euclid {
     }
 
     fn draw_shapes(&self, snap_point: Vec2) {
-        for shape in self.shapes.iter() {
-            let colour = match shape {
-                Shape::Circle { pos: _, r: _, colour } => colour,
-                Shape::Line { points: _, colour } => colour,
-                Shape::LineSegment { points: _, colour } => colour,
-                Shape::Arc { points: _, colour } => colour,
-            };
-
-            if colour.a > (self.options.guide_alpha_cutoff as f32 / 255.0) || self.options.show_guides {
-                match shape {
-                    Shape::Circle { pos: p1, r, colour } => {
-                        utils::draw_circle(*p1, *r, *colour, self.options.line_thickness);
-                    }
-
-                    Shape::Line {
-                        points: [p1, p2],
-                    colour,
-                    } => utils::draw_line(*p1, *p2, *colour, self.options.line_thickness),
-
-                    Shape::LineSegment {
-                        points: [p1, p2],
-                    colour,
-                    } => utils::draw_segment(*p1, *p2, *colour, self.options.line_thickness),
-
-                    Shape::Arc {
-                        points: [_p1, _p2, _p3],
-                    colour: _colour,
-                    } => (),
-                }
+        for construction in self.constructions.iter() {
+            if self.options.show_guides || construction.color.a > self.options.guide_a {
+                construction.draw(self.options.line_thickness);
             }
         }
 
@@ -269,14 +248,14 @@ impl Euclid {
         y = y + text_height + style.padding;
 
         draw_text_ex(
-            &format!("Shapes: {}", self.shapes.len()),
+            &format!("Shapes: {}", self.constructions.len()),
             style.padding,
             y,
             text_params,
         );
 
         y = y + text_height + line_space;
-        
+
         draw_text_ex(
             &format!("Intersections: {}", self.intersections.len()),
             style.padding,
@@ -294,7 +273,7 @@ impl Euclid {
                 y -= radius / 1.5;
             }
 
-            draw_circle(x, y, radius, *color);
+            utils::draw_filled_circle(Vec2::new(x, y), radius, *color);
         }
     }
 
@@ -329,12 +308,11 @@ impl Euclid {
         }
     }
 
-    pub fn add_shape(&mut self, shape: Shape) {
-        for other in self.shapes.iter() {
-            self.intersections
-                .append(find_intersections(&shape, other).as_mut());
+    pub fn add_construction(&mut self, construction: Construction) {
+        for other in self.constructions.iter() {
+            self.intersections.append(&mut construction.shape.intersections(&other.shape));
         }
 
-        self.shapes.push(shape);
+        self.constructions.push(construction);
     }
 }
