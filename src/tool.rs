@@ -4,8 +4,8 @@ use crate::{shape::Shape, utils};
 
 pub trait Tool {
     fn name(&self) -> &str;
-    fn num_points(&self) -> i8;
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color);
+    fn num_points(&self) -> u8;
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32);
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape;
 }
 
@@ -18,12 +18,12 @@ impl Tool for Compass {
         "Compass"
     }
 
-    fn num_points(&self) -> i8 {
+    fn num_points(&self) -> u8 {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
-        utils::draw_circle(points[0], points[0].distance(mouse), colour);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
+        utils::draw_circle(points[0], points[0].distance(mouse), colour, thickness);
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
@@ -40,12 +40,12 @@ impl Tool for StraightEdge {
         "Straight Edge"
     }
 
-    fn num_points(&self) -> i8 {
+    fn num_points(&self) -> u8 {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
-        utils::draw_line(points[0], mouse, colour);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
+        utils::draw_line(points[0], mouse, colour, thickness);
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
@@ -61,12 +61,12 @@ impl Tool for LineSegment {
         "Line Segment"
     }
 
-    fn num_points(&self) -> i8 {
+    fn num_points(&self) -> u8 {
         2
     }
 
-    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color) {
-        utils::draw_segment(points[0], mouse, colour);
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, colour: Color, thickness: f32) {
+        utils::draw_segment(points[0], mouse, colour, thickness);
     }
 
     fn get_shape(&self, points: &Vec<Vec2>, colour: Color) -> Shape {
