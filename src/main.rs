@@ -25,7 +25,7 @@ async fn main() {
     let gruvbox = ColorPalette {
         black: Color::from_rgba(10, 10, 10, 255),
         white: Color::from_rgba(235, 219, 178, 255),
-        gray: Color::from_rgba(168, 154, 132, 200),
+        gray: Color::from_rgba(168, 154, 132, 150),
         red: Color::from_rgba(204, 36, 29, 255),
         green: Color::from_rgba(152, 151, 26, 255),
         yellow: Color::from_rgba(215, 153, 33, 255),

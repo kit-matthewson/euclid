@@ -26,9 +26,12 @@ pub struct Options {
     snap_radius: f32,
     line_thickness: f32,
     point_size: f32,
+    guide_alpha_cutoff: u8,
 
     show_interface: bool,
     show_intersections: bool,
+    show_guides: bool,
+
     current_tool_index: usize,
     current_color_index: usize,
 }
@@ -75,6 +78,9 @@ impl Euclid {
             options: Options {
                 show_interface: true,
                 show_intersections: true,
+                show_guides: true,
+
+                guide_alpha_cutoff: 200,
 
                 snap_radius: 15.0,
                 line_thickness: 1.0,
@@ -167,31 +173,52 @@ impl Euclid {
                     (self.options.current_tool_index + 1) % self.tools.len();
             }
 
+            Some(KeyCode::F10) => {
+                self.options.show_guides = !self.options.show_guides;
+            }
+
+            Some(KeyCode::F11) => {
+                self.options.show_interface = !self.options.show_interface;
+            }
+
+            Some(KeyCode::F12) => {
+                self.options.show_intersections = !self.options.show_intersections;
+            }
+
             _ => (),
         };
     }
 
     fn draw_shapes(&self, snap_point: Vec2) {
         for shape in self.shapes.iter() {
-            match shape {
-                Shape::Circle { pos: p1, r, colour } => {
-                    utils::draw_circle(*p1, *r, *colour, self.options.line_thickness);
-                }
+            let colour = match shape {
+                Shape::Circle { pos: _, r: _, colour } => colour,
+                Shape::Line { points: _, colour } => colour,
+                Shape::LineSegment { points: _, colour } => colour,
+                Shape::Arc { points: _, colour } => colour,
+            };
 
-                Shape::Line {
-                    points: [p1, p2],
+            if colour.a > (self.options.guide_alpha_cutoff as f32 / 255.0) || self.options.show_guides {
+                match shape {
+                    Shape::Circle { pos: p1, r, colour } => {
+                        utils::draw_circle(*p1, *r, *colour, self.options.line_thickness);
+                    }
+
+                    Shape::Line {
+                        points: [p1, p2],
                     colour,
-                } => utils::draw_line(*p1, *p2, *colour, self.options.line_thickness),
+                    } => utils::draw_line(*p1, *p2, *colour, self.options.line_thickness),
 
-                Shape::LineSegment {
-                    points: [p1, p2],
+                    Shape::LineSegment {
+                        points: [p1, p2],
                     colour,
-                } => utils::draw_segment(*p1, *p2, *colour, self.options.line_thickness),
+                    } => utils::draw_segment(*p1, *p2, *colour, self.options.line_thickness),
 
-                Shape::Arc {
-                    points: [_p1, _p2, _p3],
+                    Shape::Arc {
+                        points: [_p1, _p2, _p3],
                     colour: _colour,
-                } => (),
+                    } => (),
+                }
             }
         }
 
@@ -219,17 +246,16 @@ impl Euclid {
             font_scale_aspect: 1.0,
         };
 
-        let text_height = measure_text("a", Some(style.font), style.font_size, 1.0).height;
+        let text_height = measure_text("S", Some(style.font), style.font_size, 1.0).height;
 
-        draw_text_ex(
-            "Euclid Geometry Engine",
-            style.padding,
-            style.padding + text_height,
-            text_params,
-        );
+        let mut y = style.padding + text_height;
+        draw_text_ex("Euclid Geometry Engine", style.padding, y, text_params);
+
+        let radius = 8.0;
+        let line_space = 3.0;
 
         for (i, tool) in self.tools.iter().enumerate() {
-            let y = (style.padding + text_height) * (i as f32 + 2.0);
+            y = y + text_height + line_space;
 
             let text = if i == self.options.current_tool_index {
                 format!("> {}", tool.name())
@@ -240,7 +266,23 @@ impl Euclid {
             draw_text_ex(&text, style.padding, y, text_params);
         }
 
-        let radius = 8.0;
+        y = y + text_height + style.padding;
+
+        draw_text_ex(
+            &format!("Shapes: {}", self.shapes.len()),
+            style.padding,
+            y,
+            text_params,
+        );
+
+        y = y + text_height + line_space;
+        
+        draw_text_ex(
+            &format!("Intersections: {}", self.intersections.len()),
+            style.padding,
+            y,
+            text_params,
+        );
 
         for (i, color) in self.style.tool_colors.iter().enumerate() {
             let x = screen_width() / 2.0
@@ -266,7 +308,11 @@ impl Euclid {
             self.options.line_thickness,
         );
 
-        utils::draw_filled_circle(snap_point, self.options.point_size, self.style.palette.yellow);
+        utils::draw_filled_circle(
+            snap_point,
+            self.options.point_size,
+            self.style.palette.yellow,
+        );
 
         for point in self.points.iter() {
             utils::draw_filled_circle(*point, self.options.point_size, self.style.palette.yellow)
