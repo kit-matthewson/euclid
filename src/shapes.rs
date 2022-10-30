@@ -1,4 +1,5 @@
 use crate::utils;
+
 use macroquad::prelude::*;
 
 pub struct Construction {
@@ -47,6 +48,13 @@ pub struct SegmentData {
     pub p2: Vec2,
 }
 
+pub struct ArcData {
+    pub pos: Vec2,
+    pub r: f32,
+    pub start: f32,
+    pub stop: f32,
+}
+
 impl SegmentData {
     pub fn line(&self) -> LineData {
         LineData { p1: self.p1, p2: self.p2 }
@@ -67,13 +75,6 @@ impl SegmentData {
 
         return valid;
     }
-}
-
-pub struct ArcData {
-    pub pos: Vec2,
-    pub r: f32,
-    pub start: f32,
-    pub end: f32,
 }
 
 impl ArcData {
@@ -129,8 +130,7 @@ impl Shape {
             let m = (a.pos.x - b.pos.x) / (b.pos.y - a.pos.y);
 
             if m.is_infinite() {
-                println!("[ERR] vertical circle-circle points");
-                return Vec::new();
+                panic!("vertical circle-circle points");
             }
 
             let c = ((a.pos.x * a.pos.x) + (a.pos.y * a.pos.y)
@@ -155,8 +155,7 @@ impl Shape {
         let c = -m * b.p1.x + b.p1.y;
 
         if m.is_infinite() {
-            println!("[ERR] vertical circle-line point");
-            return Vec::new();
+            panic!("vertical circle-line intersections")
         }
 
         let d = ((m * m + 1.0) * (a.r * a.r)) - f32::powi(a.pos.x * m - a.pos.y + c, 2);

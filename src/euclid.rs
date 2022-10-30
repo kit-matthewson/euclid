@@ -31,7 +31,7 @@ pub struct Options {
     snap_radius: f32,
     line_thickness: f32,
     point_size: f32,
-    guide_a: f32,
+    guide_alpha: f32,
 
     show_interface: bool,
     show_intersections: bool,
@@ -59,7 +59,8 @@ impl Euclid {
             intersections: Vec::new(),
             points: Vec::new(),
             undo_queue: Vec::new(),
-            tools: vec![&Compass, &StraightEdge, &LineSegment],
+
+            tools: vec![&Compass, &StraightEdge, &LineSegment, &Arc],
 
             style: Style {
                 tool_colors: vec![
@@ -85,7 +86,7 @@ impl Euclid {
                 show_intersections: true,
                 show_guides: true,
 
-                guide_a: 0.75,
+                guide_alpha: 0.75,
 
                 snap_radius: 15.0,
                 line_thickness: 1.0,
@@ -196,7 +197,7 @@ impl Euclid {
 
     fn draw_shapes(&self, snap_point: Vec2) {
         for construction in self.constructions.iter() {
-            if self.options.show_guides || construction.color.a > self.options.guide_a {
+            if self.options.show_guides || construction.color.a > self.options.guide_alpha {
                 construction.draw(self.options.line_thickness);
             }
         }

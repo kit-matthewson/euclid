@@ -12,6 +12,7 @@ pub trait Tool {
 pub struct Compass;
 pub struct StraightEdge;
 pub struct LineSegment;
+pub struct Arc;
 
 impl Tool for Compass {
     fn name(&self) -> &str {
@@ -81,6 +82,41 @@ impl Tool for LineSegment {
             shape: Shape::Segment(SegmentData {
                 p1: points[0],
                 p2: points[1],
+            }),
+
+            color,
+        }
+    }
+}
+
+impl Tool for Arc {
+    fn name(&self) -> &str {
+        "Arc"
+    }
+
+    fn num_points(&self) -> u8 {
+        3
+    }
+
+    fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32) {
+        if points.len() == 1 {
+            utils::draw_segment(points[0], mouse, color, thickness);
+            utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
+        } else {
+            let r = points[0].distance(points[1]);
+
+
+            utils::draw_arc(points[0], r, utils::arc_angle(points[1], points[0]), utils::arc_angle(mouse, points[0]), color, thickness);
+        }
+    }
+
+    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
+        Construction {
+            shape: Shape::Arc(ArcData {
+                pos: points[0],
+                r: points[0].distance(points[1]),
+                start: utils::arc_angle(points[1], points[0]),
+                stop: utils::arc_angle(points[2], points[0]),
             }),
 
             color,

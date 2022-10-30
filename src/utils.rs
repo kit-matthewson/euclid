@@ -1,4 +1,6 @@
-use macroquad::prelude::{screen_height, screen_width, Color, Vec2};
+use std::f32::consts::PI;
+
+use macroquad::prelude::*;
 
 pub fn draw_circle(pos: Vec2, r: f32, color: Color, thickness: f32) {
     macroquad::prelude::draw_poly_lines(
@@ -58,6 +60,18 @@ pub fn draw_line(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {
 
 pub fn draw_segment(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {
     macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
+}
+
+#[allow(unused_variables)]
+pub fn draw_arc(pos: Vec2, r: f32, start: f32, stop: f32, color: Color, thickness: f32) {
+    // Will need to manually construct a mesh
+    todo!()
+}
+
+pub fn arc_angle(point: Vec2, centre: Vec2) -> f32 {
+    let rel = centre - point;
+
+    return libm::acos(rel.dot(Vec2::new(0.0, 1.0)) as f64) as f32 * (rel.x / rel.x.abs()) + PI;
 }
 
 pub fn set_opacity(color: Color, a: f32) -> Color {
