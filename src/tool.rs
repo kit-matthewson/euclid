@@ -1,4 +1,4 @@
-use macroquad::prelude::{Color, Vec2};
+use macroquad::{prelude::{Color, Vec2}};
 
 use crate::{shapes::*, utils};
 
@@ -104,8 +104,6 @@ impl Tool for Arc {
             utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
         } else {
             let r = points[0].distance(points[1]);
-
-
             utils::draw_arc(points[0], r, utils::arc_angle(points[1], points[0]), utils::arc_angle(mouse, points[0]), color, thickness);
         }
     }

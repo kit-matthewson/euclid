@@ -69,9 +69,14 @@ pub fn draw_arc(pos: Vec2, r: f32, start: f32, stop: f32, color: Color, thicknes
 }
 
 pub fn arc_angle(point: Vec2, centre: Vec2) -> f32 {
-    let rel = centre - point;
+    let rel = (point - centre).normalize();
 
-    return libm::acos(rel.dot(Vec2::new(0.0, 1.0)) as f64) as f32 * (rel.x / rel.x.abs()) + PI;
+    let mut angle = libm::acos(rel.dot(Vec2::new(0.0, 1.0)) as f64) as f32;
+    if angle.is_nan() {
+        angle = 0.0;
+    }
+
+    return angle * (-rel.x / rel.x.abs()) + PI;
 }
 
 pub fn set_opacity(color: Color, a: f32) -> Color {
