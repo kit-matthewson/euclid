@@ -191,7 +191,7 @@ impl Euclid {
 
     fn draw_shapes(&self, snap_point: Vec2) {
         for construction in self.constructions.iter() {
-            if self.options.show_guides || construction.color == self.style.palette.guide {
+            if self.options.show_guides || construction.color != self.style.palette.guide {
                 construction.draw(self.options.line_thickness);
             }
         }
