@@ -67,11 +67,7 @@ pub fn draw_arc(pos: Vec2, r: f32, start: f32, stop: f32, color: Color, thicknes
         return Vec2::new(pos.x + (r * angle.cos()), pos.y + (r * angle.sin()));
     }
 
-    let end = if start > stop {
-        stop + 2.0 * PI
-    } else {
-        stop
-    };
+    let end = if start > stop { stop + 2.0 * PI } else { stop };
 
     let mut angle = start;
     while angle <= end {
@@ -92,7 +88,13 @@ pub fn arc_angle(point: Vec2, centre: Vec2) -> f32 {
         angle = 0.0;
     }
 
-    return (angle * (rel.y / rel.y.abs()) - PI).abs();
+    let sign = if rel.y == 0.0 {
+        1.0
+    } else {
+        rel.y / rel.y.abs()
+    };
+
+    return (angle * sign - PI).abs();
 }
 
 pub fn set_opacity(color: Color, a: f32) -> Color {
