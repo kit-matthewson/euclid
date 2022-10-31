@@ -20,7 +20,7 @@ impl Construction {
                 utils::draw_segment(segment.p1, segment.p2, self.color, thickness)
             }
 
-            Shape::Arc(_) => todo!(),
+            Shape::Arc(arc) => utils::draw_arc(arc.pos, arc.r, arc.start, arc.stop, self.color, thickness),
         }
     }
 }
@@ -85,8 +85,9 @@ impl ArcData {
         }
     }
 
-    pub fn valid_points(&self, _points: Vec<Vec2>) -> Vec<Vec2> {
-        todo!()
+    pub fn valid_points(&self, points: Vec<Vec2>) -> Vec<Vec2> {
+        println!("treating arc as circle for intersections");
+        return points;
     }
 }
 

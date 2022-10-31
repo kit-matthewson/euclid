@@ -62,21 +62,37 @@ pub fn draw_segment(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {
     macroquad::prelude::draw_line(p1.x, p1.y, p2.x, p2.y, thickness, color);
 }
 
-#[allow(unused_variables)]
 pub fn draw_arc(pos: Vec2, r: f32, start: f32, stop: f32, color: Color, thickness: f32) {
-    // Will need to manually construct a mesh
-    todo!()
+    fn point(pos: Vec2, r: f32, angle: f32) -> Vec2 {
+        return Vec2::new(pos.x + (r * angle.cos()), pos.y + (r * angle.sin()));
+    }
+
+    let end = if start > stop {
+        stop + 2.0 * PI
+    } else {
+        stop
+    };
+
+    let mut angle = start;
+    while angle <= end {
+        let a = point(pos, r, angle);
+        angle += 0.005;
+        let b = point(pos, r, angle);
+
+        macroquad::prelude::draw_line(a.x, a.y, b.x, b.y, thickness, color);
+    }
 }
 
 pub fn arc_angle(point: Vec2, centre: Vec2) -> f32 {
     let rel = (point - centre).normalize();
 
-    let mut angle = libm::acos(rel.dot(Vec2::new(0.0, 1.0)) as f64) as f32;
+    let mut angle = libm::acos(Vec2::new(-1.0, 0.0).dot(rel) as f64) as f32;
+
     if angle.is_nan() {
         angle = 0.0;
     }
 
-    return angle * (-rel.x / rel.x.abs()) + PI;
+    return (angle * (rel.y / rel.y.abs()) - PI).abs();
 }
 
 pub fn set_opacity(color: Color, a: f32) -> Color {
