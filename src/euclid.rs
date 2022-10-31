@@ -1,20 +1,17 @@
 use macroquad::prelude::*;
 
-use crate::{
-    shapes::*,
-    tool::*,
-    utils,
-};
+use crate::{shapes::*, tool::*, utils};
 
 pub struct ColorPalette {
-    pub black: Color,
-    pub white: Color,
-    pub gray: Color,
-    pub red: Color,
-    pub green: Color,
-    pub yellow: Color,
-    pub blue: Color,
-    pub purple: Color,
+    pub background: Color,
+    pub foreground: Color,
+    pub guide: Color,
+
+    pub tool_a: Color,
+    pub tool_b: Color,
+    pub tool_c: Color,
+    pub tool_d: Color,
+    pub tool_e: Color,
 }
 
 struct Style {
@@ -31,7 +28,6 @@ pub struct Options {
     snap_radius: f32,
     line_thickness: f32,
     point_size: f32,
-    guide_alpha: f32,
 
     show_interface: bool,
     show_intersections: bool,
@@ -64,13 +60,13 @@ impl Euclid {
 
             style: Style {
                 tool_colors: vec![
-                    palette.white,
-                    palette.gray,
-                    palette.red,
-                    palette.green,
-                    palette.yellow,
-                    palette.blue,
-                    palette.purple,
+                    palette.foreground,
+                    palette.guide,
+                    palette.tool_a,
+                    palette.tool_b,
+                    palette.tool_c,
+                    palette.tool_d,
+                    palette.tool_e,
                 ],
 
                 palette,
@@ -85,8 +81,6 @@ impl Euclid {
                 show_interface: true,
                 show_intersections: true,
                 show_guides: true,
-
-                guide_alpha: 0.75,
 
                 snap_radius: 15.0,
                 line_thickness: 1.0,
@@ -113,7 +107,7 @@ impl Euclid {
             }
 
             self.handle_input(snap_point);
-            clear_background(self.style.palette.black);
+            clear_background(self.style.palette.background);
             self.draw(mouse, snap_point);
             next_frame().await;
         }
@@ -197,7 +191,7 @@ impl Euclid {
 
     fn draw_shapes(&self, snap_point: Vec2) {
         for construction in self.constructions.iter() {
-            if self.options.show_guides || construction.color.a > self.options.guide_alpha {
+            if self.options.show_guides || construction.color == self.style.palette.guide {
                 construction.draw(self.options.line_thickness);
             }
         }
@@ -221,7 +215,7 @@ impl Euclid {
         let text_params = TextParams {
             font: style.font,
             font_size: style.font_size,
-            color: style.palette.white,
+            color: style.palette.foreground,
             font_scale: 1.0,
             font_scale_aspect: 1.0,
         };
@@ -279,23 +273,23 @@ impl Euclid {
     }
 
     fn draw_points(&self, mouse: Vec2, snap_point: Vec2) {
-        utils::draw_filled_circle(mouse, self.options.point_size, self.style.palette.gray);
+        utils::draw_filled_circle(mouse, self.options.point_size, self.style.palette.guide);
 
         utils::draw_segment(
             mouse,
             snap_point,
-            self.style.palette.gray,
+            self.style.palette.guide,
             self.options.line_thickness,
         );
 
         utils::draw_filled_circle(
             snap_point,
             self.options.point_size,
-            self.style.palette.yellow,
+            self.style.palette.tool_c,
         );
 
         for point in self.points.iter() {
-            utils::draw_filled_circle(*point, self.options.point_size, self.style.palette.yellow)
+            utils::draw_filled_circle(*point, self.options.point_size, self.style.palette.tool_c)
         }
     }
 
@@ -304,14 +298,15 @@ impl Euclid {
             utils::draw_filled_circle(
                 *intersection,
                 self.options.point_size,
-                self.style.palette.red,
+                self.style.palette.tool_a,
             )
         }
     }
 
     pub fn add_construction(&mut self, construction: Construction) {
         for other in self.constructions.iter() {
-            self.intersections.append(&mut construction.shape.intersections(&other.shape));
+            self.intersections
+                .append(&mut construction.shape.intersections(&other.shape));
         }
 
         self.constructions.push(construction);

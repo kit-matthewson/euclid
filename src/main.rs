@@ -23,14 +23,14 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let gruvbox = ColorPalette {
-        black: Color::from_rgba(10, 10, 10, 255),
-        white: Color::from_rgba(235, 219, 178, 255),
-        gray: Color::from_rgba(168, 154, 132, 150),
-        red: Color::from_rgba(204, 36, 29, 255),
-        green: Color::from_rgba(152, 151, 26, 255),
-        yellow: Color::from_rgba(215, 153, 33, 255),
-        blue: Color::from_rgba(69, 133, 136, 255),
-        purple: Color::from_rgba(177, 98, 134, 255),
+        background: Color::from_rgba(10, 10, 10, 255),
+        foreground: Color::from_rgba(235, 219, 178, 255),
+        guide: Color::from_rgba(168, 154, 132, 150),
+        tool_a: Color::from_rgba(204, 36, 29, 255),
+        tool_b: Color::from_rgba(152, 151, 26, 255),
+        tool_c: Color::from_rgba(215, 153, 33, 255),
+        tool_d: Color::from_rgba(69, 133, 136, 255),
+        tool_e: Color::from_rgba(177, 98, 134, 255),
     };
 
     let roboto = load_ttf_font("./assets/fonts/RobotoMono.ttf")
