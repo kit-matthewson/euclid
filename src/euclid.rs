@@ -79,7 +79,7 @@ impl Euclid {
 
             options: Options {
                 show_interface: true,
-                show_intersections: true,
+                show_intersections: false,
                 show_guides: true,
 
                 snap_radius: 15.0,

@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use crate::utils;
 
 use macroquad::prelude::*;
@@ -20,7 +22,9 @@ impl Construction {
                 utils::draw_segment(segment.p1, segment.p2, self.color, thickness)
             }
 
-            Shape::Arc(arc) => utils::draw_arc(arc.pos, arc.r, arc.start, arc.stop, self.color, thickness),
+            Shape::Arc(arc) => {
+                utils::draw_arc(arc.pos, arc.r, arc.start, arc.stop, self.color, thickness)
+            }
         }
     }
 }
@@ -57,7 +61,10 @@ pub struct ArcData {
 
 impl SegmentData {
     pub fn line(&self) -> LineData {
-        LineData { p1: self.p1, p2: self.p2 }
+        LineData {
+            p1: self.p1,
+            p2: self.p2,
+        }
     }
 
     pub fn valid_points(&self, points: Vec<Vec2>) -> Vec<Vec2> {
@@ -65,9 +72,9 @@ impl SegmentData {
 
         for point in points {
             if (self.p1.x < point.x && point.x < self.p2.x)
-                || (self.p1.x > point.x && point.x > self.p2.x)
-                   && (self.p1.y < point.y && point.y < self.p2.y)
-               || (self.p1.y > point.y && point.y > self.p2.y)
+                || (self.p2.x < point.x && point.x < self.p1.x)
+                    && (self.p1.y < point.y && point.y < self.p2.y)
+                || (self.p2.y < point.y && point.y < self.p1.y)
             {
                 valid.push(point);
             }
@@ -86,8 +93,25 @@ impl ArcData {
     }
 
     pub fn valid_points(&self, points: Vec<Vec2>) -> Vec<Vec2> {
-        println!("treating arc as circle for intersections");
-        return points;
+        let mut valid = Vec::new();
+
+        for point in points {
+            let angle = utils::arc_angle(point, self.pos);
+
+            if self.stop < self.start {
+                if (self.start <= angle && angle <= 2.0 * PI)
+                    || (self.stop >= angle && angle >= 0.0)
+                {
+                    valid.push(point);
+                }
+            } else {
+                if angle >= self.start && angle <= self.stop {
+                    valid.push(point);
+                }
+            }
+        }
+
+        return valid;
     }
 }
 
@@ -223,7 +247,7 @@ impl Shape {
     }
 
     fn segment_segment(a: &SegmentData, b: &SegmentData) -> Vec<Vec2> {
-        let possible = Shape::line_segment(&b.line(), a);
+        let possible = Shape::line_segment(&a.line(), b);
         return a.valid_points(possible);
     }
 
@@ -233,7 +257,7 @@ impl Shape {
     }
 
     fn arc_arc(a: &ArcData, b: &ArcData) -> Vec<Vec2> {
-        let possible = Shape::circle_arc(&b.circle(), a);
+        let possible = Shape::circle_arc(&a.circle(), b);
         return a.valid_points(possible);
     }
 }

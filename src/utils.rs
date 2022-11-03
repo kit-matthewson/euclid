@@ -71,8 +71,10 @@ pub fn draw_arc(pos: Vec2, r: f32, start: f32, stop: f32, color: Color, thicknes
 
     let mut angle = start;
     let mut prev = point(pos, r, angle);
+
     while angle <= end {
-        angle +=  PI / (r + 10.0);
+        angle += 0.005;
+
         let a = point(pos, r, angle);
         macroquad::prelude::draw_line(a.x, a.y, prev.x, prev.y, thickness, color);
         prev = a;
