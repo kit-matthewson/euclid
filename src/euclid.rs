@@ -35,6 +35,7 @@ pub struct Options {
 
     current_tool_index: usize,
     current_color_index: usize,
+    current_layer_index: usize,
 }
 
 pub struct Euclid {
@@ -42,10 +43,27 @@ pub struct Euclid {
     intersections: Vec<Vec2>,
     points: Vec<Vec2>,
     undo_queue: Vec<Construction>,
+
     tools: Vec<&'static dyn Tool>,
+
+    layers: [LayerState; 4],
 
     style: Style,
     options: Options,
+}
+
+enum LayerState {
+    Visible,
+    Hidden,
+}
+
+impl LayerState {
+    fn to_str(&self) -> &str {
+        match self {
+            LayerState::Visible => "Show",
+            LayerState::Hidden => "Hide",
+        }
+    }
 }
 
 impl Euclid {
@@ -57,6 +75,12 @@ impl Euclid {
             undo_queue: Vec::new(),
 
             tools: vec![&Compass, &StraightEdge, &LineSegment, &Arc],
+            layers: [
+                LayerState::Visible,
+                LayerState::Visible,
+                LayerState::Visible,
+                LayerState::Hidden,
+            ],
 
             style: Style {
                 tool_colors: vec![
@@ -88,6 +112,7 @@ impl Euclid {
 
                 current_tool_index: 0,
                 current_color_index: 0,
+                current_layer_index: 0,
             },
         }
     }
@@ -222,28 +247,80 @@ impl Euclid {
 
         let text_height = measure_text("S", Some(style.font), style.font_size, 1.0).height;
 
-        let mut y = style.padding + text_height;
-        draw_text_ex("Euclid Geometry Engine", style.padding, y, text_params);
-
         let radius = 8.0;
         let line_space = 3.0;
 
-        for (i, tool) in self.tools.iter().enumerate() {
-            y = y + text_height + line_space;
+        let mut y = style.padding + text_height;
 
+        draw_text_ex("Euclid Geometry Engine", style.padding, y, text_params);
+
+        y = y + text_height + style.padding;
+
+        draw_text_ex("Tools", style.padding, y, text_params);
+
+        y = y + text_height + line_space;
+
+        for (i, tool) in self.tools.iter().enumerate() {
             let text = if i == self.options.current_tool_index {
-                format!("> {}", tool.name())
+                format!("> F{}: {}", i + 1, tool.name())
             } else {
-                format!("  {}", tool.name())
+                format!("  F{}: {}", i + 1, tool.name())
             };
 
             draw_text_ex(&text, style.padding, y, text_params);
+
+            if i != self.tools.len() - 1 {
+                y = y + text_height + line_space;
+            }
         }
 
         y = y + text_height + style.padding;
 
+        draw_text_ex("Layers", style.padding, y, text_params);
+
+        y = y + text_height + line_space;
+
+        for (i, layer) in self.layers.iter().enumerate() {
+            let text = if i == self.options.current_layer_index {
+                format!("> F{}: {}", i + 5, layer.to_str())
+            } else {
+                format!("  F{}: {}", i + 5, layer.to_str())
+            };
+
+            draw_text_ex(&text, style.padding, y, text_params);
+
+            if i != self.layers.len() - 1 {
+                y = y + text_height + line_space;
+            }
+        }
+
+        y = y + text_height + style.padding;
+
+        draw_text_ex("Show/Hide", style.padding, y, text_params);
+
+        y = y + text_height + line_space;
+
+        for (i, layer) in ["Intersections", "Interface", "Guides", "All"]
+            .iter()
+            .enumerate()
+        {
+            let text = format!("  F{}: {}", i + 9, layer);
+
+            draw_text_ex(&text, style.padding, y, text_params);
+
+            if i != self.layers.len() - 1 {
+                y = y + text_height + line_space;
+            }
+        }
+
+        y = y + text_height + style.padding;
+
+        draw_text_ex("Stats", style.padding, y, text_params);
+
+        y = y + text_height + line_space;
+
         draw_text_ex(
-            &format!("Shapes: {}", self.constructions.len()),
+            &format!("  Shapes: {}", self.constructions.len()),
             style.padding,
             y,
             text_params,
@@ -252,7 +329,20 @@ impl Euclid {
         y = y + text_height + line_space;
 
         draw_text_ex(
-            &format!("Intersections: {}", self.intersections.len()),
+            &format!("  Intersections: {}", self.intersections.len()),
+            style.padding,
+            y,
+            text_params,
+        );
+
+        y = y + text_height + line_space;
+
+        draw_text_ex(
+            &format!(
+                "  Frame time: {:.3}ms (fps:{:3})",
+                macroquad::time::get_frame_time(),
+                macroquad::time::get_fps()
+            ),
             style.padding,
             y,
             text_params,
