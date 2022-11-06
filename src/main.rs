@@ -13,7 +13,7 @@ fn window_conf() -> Conf {
         window_height: 0,
         high_dpi: false,
         fullscreen: true,
-        sample_count: 1,
+        sample_count: 5,
         window_resizable: false,
         icon: None,
         platform: Platform::default(),

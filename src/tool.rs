@@ -6,7 +6,7 @@ pub trait Tool {
     fn name(&self) -> &str;
     fn num_points(&self) -> u8;
     fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32);
-    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction;
+    fn get_shape(&self, points: &Vec<Vec2>) -> Shape;
 }
 
 pub struct Compass;
@@ -27,15 +27,11 @@ impl Tool for Compass {
         utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
     }
 
-    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
-        Construction {
-            shape: Shape::Circle(CircleData {
-                pos: points[0],
-                r: points[0].distance(points[1]),
-            }),
-
-            color,
-        }
+    fn get_shape(&self, points: &Vec<Vec2>) -> Shape {
+        Shape::Circle(CircleData {
+            pos: points[0],
+            r: points[0].distance(points[1]),
+        })
     }
 }
 
@@ -52,15 +48,11 @@ impl Tool for StraightEdge {
         utils::draw_line(points[0], mouse, color, thickness);
     }
 
-    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
-        Construction {
-            shape: Shape::Line(LineData {
-                p1: points[0],
-                p2: points[1],
-            }),
-
-            color,
-        }
+    fn get_shape(&self, points: &Vec<Vec2>) -> Shape {
+        Shape::Line(LineData {
+            p1: points[0],
+            p2: points[1],
+        })
     }
 }
 
@@ -77,15 +69,11 @@ impl Tool for LineSegment {
         utils::draw_segment(points[0], mouse, color, thickness);
     }
 
-    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
-        Construction {
-            shape: Shape::Segment(SegmentData {
-                p1: points[0],
-                p2: points[1],
-            }),
-
-            color,
-        }
+    fn get_shape(&self, points: &Vec<Vec2>) -> Shape {
+        Shape::Segment(SegmentData {
+            p1: points[0],
+            p2: points[1],
+        })
     }
 }
 
@@ -103,26 +91,44 @@ impl Tool for Arc {
             utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
         } else if points.len() == 2 {
             utils::draw_circle(points[0], points[0].distance(points[1]), color, thickness);
-            utils::draw_segment(points[0], points[0] + ((mouse - points[0]).normalize() * points[0].distance(points[1])), color, thickness);
+            utils::draw_segment(
+                points[0],
+                points[0] + ((mouse - points[0]).normalize() * points[0].distance(points[1])),
+                color,
+                thickness,
+            );
         } else if points.len() == 3 {
             let r = points[0].distance(points[1]);
 
-            utils::draw_arc(points[0], r, utils::arc_angle(points[2], points[0]), utils::arc_angle(mouse, points[0]), color, thickness);
-            utils::draw_segment(points[0], points[0] + ((points[2] - points[0]).normalize() * r), color, thickness);
-            utils::draw_segment(points[0], points[0] + ((mouse - points[0]).normalize() * r), color, thickness);
+            utils::draw_arc(
+                points[0],
+                r,
+                utils::arc_angle(points[2], points[0]),
+                utils::arc_angle(mouse, points[0]),
+                color,
+                thickness,
+            );
+            utils::draw_segment(
+                points[0],
+                points[0] + ((points[2] - points[0]).normalize() * r),
+                color,
+                thickness,
+            );
+            utils::draw_segment(
+                points[0],
+                points[0] + ((mouse - points[0]).normalize() * r),
+                color,
+                thickness,
+            );
         }
     }
 
-    fn get_construction(&self, points: &Vec<Vec2>, color: Color) -> Construction {
-        Construction {
-            shape: Shape::Arc(ArcData {
-                pos: points[0],
-                r: points[0].distance(points[1]),
-                start: utils::arc_angle(points[2], points[0]),
-                stop: utils::arc_angle(points[3], points[0]),
-            }),
-
-            color,
-        }
+    fn get_shape(&self, points: &Vec<Vec2>) -> Shape {
+        Shape::Arc(ArcData {
+            pos: points[0],
+            r: points[0].distance(points[1]),
+            start: utils::arc_angle(points[2], points[0]),
+            stop: utils::arc_angle(points[3], points[0]),
+        })
     }
 }

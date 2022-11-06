@@ -52,6 +52,7 @@ pub struct Euclid {
     options: Options,
 }
 
+#[derive(Clone, Copy, PartialEq)]
 enum LayerState {
     Visible,
     Hidden,
@@ -60,8 +61,15 @@ enum LayerState {
 impl LayerState {
     fn to_str(&self) -> &str {
         match self {
-            LayerState::Visible => "Show",
-            LayerState::Hidden => "Hide",
+            LayerState::Visible => "Visible",
+            LayerState::Hidden => "Hidden",
+        }
+    }
+
+    fn next(&self) -> LayerState {
+        match self {
+            LayerState::Visible => LayerState::Hidden,
+            LayerState::Hidden => LayerState::Visible,
         }
     }
 }
@@ -75,12 +83,7 @@ impl Euclid {
             undo_queue: Vec::new(),
 
             tools: vec![&Compass, &StraightEdge, &LineSegment, &Arc],
-            layers: [
-                LayerState::Visible,
-                LayerState::Visible,
-                LayerState::Visible,
-                LayerState::Hidden,
-            ],
+            layers: [LayerState::Visible; 4],
 
             style: Style {
                 tool_colors: vec![
@@ -160,12 +163,15 @@ impl Euclid {
         }
 
         if self.points.len() as u8 == self.tools[self.options.current_tool_index].num_points() {
-            let shape = self.tools[self.options.current_tool_index].get_construction(
-                &self.points,
-                self.style.tool_colors[self.options.current_color_index],
-            );
+            let shape = self.tools[self.options.current_tool_index].get_shape(&self.points);
 
-            self.add_construction(shape);
+            let construction = Construction {
+                shape,
+                layer: self.options.current_layer_index,
+                color: self.style.tool_colors[self.options.current_color_index],
+            };
+
+            self.add_construction(construction);
             self.points.clear();
         }
 
@@ -198,6 +204,42 @@ impl Euclid {
                     (self.options.current_tool_index + 1) % self.tools.len();
             }
 
+            Some(KeyCode::F1) => {
+                self.options.current_tool_index = 0;
+            }
+
+            Some(KeyCode::F2) => {
+                self.options.current_tool_index = 1;
+            }
+
+            Some(KeyCode::F3) => {
+                self.options.current_tool_index = 2;
+            }
+
+            Some(KeyCode::F4) => {
+                self.options.current_tool_index = 3;
+            }
+
+            Some(KeyCode::F5) => {
+                self.options.current_layer_index = 0;
+            }
+
+            Some(KeyCode::F6) => {
+                self.options.current_layer_index = 1;
+            }
+
+            Some(KeyCode::F7) => {
+                self.options.current_layer_index = 2;
+            }
+
+            Some(KeyCode::F8) => {
+                self.options.current_layer_index = 3;
+            }
+
+            Some(KeyCode::F9) => {
+                self.options.show_intersections = !self.options.show_intersections;
+            }
+
             Some(KeyCode::F10) => {
                 self.options.show_guides = !self.options.show_guides;
             }
@@ -207,7 +249,8 @@ impl Euclid {
             }
 
             Some(KeyCode::F12) => {
-                self.options.show_intersections = !self.options.show_intersections;
+                self.layers[self.options.current_layer_index] =
+                    self.layers[self.options.current_layer_index].next();
             }
 
             _ => (),
@@ -217,7 +260,9 @@ impl Euclid {
     fn draw_shapes(&self, snap_point: Vec2) {
         for construction in self.constructions.iter() {
             if self.options.show_guides || construction.color != self.style.palette.guide {
-                construction.draw(self.options.line_thickness);
+                if self.layers[construction.layer] == LayerState::Visible {
+                    construction.draw(self.options.line_thickness);
+                }
             }
         }
 
@@ -300,7 +345,7 @@ impl Euclid {
 
         y = y + text_height + line_space;
 
-        for (i, layer) in ["Intersections", "Interface", "Guides", "All"]
+        for (i, layer) in ["Intersections", "Guides", "Interface", "Layer"]
             .iter()
             .enumerate()
         {

@@ -6,6 +6,7 @@ use macroquad::prelude::*;
 
 pub struct Construction {
     pub shape: Shape,
+    pub layer: usize,
     pub color: Color,
 }
 
