@@ -9,12 +9,12 @@ use macroquad::{miniquad::conf::Platform, prelude::*};
 fn window_conf() -> Conf {
     Conf {
         window_title: String::from("Euclid"),
-        window_width: 0,
-        window_height: 0,
-        high_dpi: false,
-        fullscreen: true,
+        window_width: 1920 / 2,
+        window_height: 1080 / 2,
+        high_dpi: true,
+        fullscreen: false,
         sample_count: 5,
-        window_resizable: false,
+        window_resizable: true,
         icon: None,
         platform: Platform::default(),
     }

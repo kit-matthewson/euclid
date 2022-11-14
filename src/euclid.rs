@@ -99,7 +99,7 @@ impl Euclid {
                 palette,
 
                 font,
-                font_size: 12,
+                font_size: 8,
 
                 padding: 8.0,
             },
