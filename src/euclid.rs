@@ -80,10 +80,10 @@ impl Euclid {
             utils::draw_filled_circle(self.mouse, config.point_size, config.guide);
 
             utils::draw_segment(
-                    self.mouse,
-            self.snap_point,
-            config.guide,
-            config.line_thickness,
+                self.mouse,
+                self.snap_point,
+                config.guide,
+                config.line_thickness,
             );
 
             utils::draw_filled_circle(self.snap_point, config.point_size, config.highlight);
@@ -160,6 +160,11 @@ impl Euclid {
                     self.undo_queue.push(removed);
                 }
             }
+
+            Some(KeyCode::U) => match self.undo_queue.pop() {
+                Some(construction) => self.add_construction(construction),
+                None => (),
+            },
 
             Some(KeyCode::Tab) => {
                 self.tool_i = (self.tool_i + 1) % self.tools.len();
@@ -381,7 +386,9 @@ impl Euclid {
         );
 
         for (i, color) in config.tool_colors.iter().enumerate() {
-            let x = (screen_width() / 2.0) + (i as f32 - ((config.tool_colors.len() - 1) as f32 / 2.0)) * (radius * 2.0 + config.padding);
+            let x = (screen_width() / 2.0)
+                + (i as f32 - ((config.tool_colors.len() - 1) as f32 / 2.0))
+                    * (radius * 2.0 + config.padding);
             let mut y = screen_height() - config.padding - radius - radius;
 
             if i == self.color_i {
