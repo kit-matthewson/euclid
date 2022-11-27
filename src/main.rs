@@ -15,7 +15,7 @@ fn window_conf() -> Conf {
         high_dpi: true,
         fullscreen: true,
         sample_count: 5,
-        window_resizable: false,
+        window_resizable: true,
         icon: None,
         platform: Platform::default(),
     }
