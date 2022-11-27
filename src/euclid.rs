@@ -2,173 +2,137 @@ use macroquad::prelude::*;
 
 use crate::{shapes::*, tool::*, utils};
 
-pub struct ColorPalette {
-    pub background: Color,
-    pub foreground: Color,
-    pub guide: Color,
-
-    pub tool_a: Color,
-    pub tool_b: Color,
-    pub tool_c: Color,
-    pub tool_d: Color,
-    pub tool_e: Color,
-}
-
-struct Style {
-    palette: ColorPalette,
-    tool_colors: Vec<Color>,
-
-    font: Font,
-    font_size: u16,
-
-    padding: f32,
-}
-
-pub struct Options {
-    snap_radius: f32,
-    line_thickness: f32,
-    point_size: f32,
-
-    show_interface: bool,
-    show_intersections: bool,
-    show_guides: bool,
-
-    current_tool_index: usize,
-    current_color_index: usize,
-    current_layer_index: usize,
-}
-
 pub struct Euclid {
-    constructions: Vec<Construction>,
-    intersections: Vec<Vec2>,
     points: Vec<Vec2>,
+    intersections: Vec<Vec2>,
+    constructions: Vec<Construction>,
     undo_queue: Vec<Construction>,
 
     tools: Vec<&'static dyn Tool>,
 
-    layers: [LayerState; 4],
+    tool_i: usize,
+    color_i: usize,
+    layer_i: usize,
 
-    style: Style,
-    options: Options,
+    show_interface: bool,
+    show_intersections: bool,
+    show_guides: bool,
+    show_layer: [bool; 4],
+
+    mouse: Vec2,
+    snap_point: Vec2,
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum LayerState {
-    Visible,
-    Hidden,
-}
+pub struct EuclidConfig {
+    pub padding: f32,
 
-impl LayerState {
-    fn to_str(&self) -> &str {
-        match self {
-            LayerState::Visible => "Visible",
-            LayerState::Hidden => "Hidden",
-        }
-    }
+    pub background: Color,
+    pub foreground: Color,
+    pub guide: Color,
+    pub highlight: Color,
+    pub tool_colors: Vec<Color>,
 
-    fn next(&self) -> LayerState {
-        match self {
-            LayerState::Visible => LayerState::Hidden,
-            LayerState::Hidden => LayerState::Visible,
-        }
-    }
+    pub font: Font,
+    pub font_size: u16,
+
+    pub snap_radius: f32,
+    pub line_thickness: f32,
+    pub point_size: f32,
 }
 
 impl Euclid {
-    pub fn new(palette: ColorPalette, font: Font) -> Euclid {
+    pub fn new() -> Euclid {
         Euclid {
-            constructions: Vec::new(),
-            intersections: Vec::new(),
             points: Vec::new(),
+            intersections: Vec::new(),
+            constructions: Vec::new(),
             undo_queue: Vec::new(),
 
             tools: vec![&Compass, &StraightEdge, &LineSegment, &Arc],
-            layers: [LayerState::Visible; 4],
 
-            style: Style {
-                tool_colors: vec![
-                    palette.foreground,
-                    palette.guide,
-                    palette.tool_a,
-                    palette.tool_b,
-                    palette.tool_c,
-                    palette.tool_d,
-                    palette.tool_e,
-                ],
+            tool_i: 0,
+            color_i: 0,
+            layer_i: 0,
 
-                palette,
+            show_interface: true,
+            show_intersections: true,
+            show_guides: true,
 
-                font,
-                font_size: 12,
-
-                padding: 8.0,
-            },
-
-            options: Options {
-                show_interface: true,
-                show_intersections: false,
-                show_guides: true,
-
-                snap_radius: 15.0,
-                line_thickness: 1.0,
-                point_size: 2.0,
-
-                current_tool_index: 0,
-                current_color_index: 0,
-                current_layer_index: 0,
-            },
+            show_layer: [true; 4],
+            mouse: Vec2::default(),
+            snap_point: Vec2::default(),
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, config: &EuclidConfig) {
         loop {
-            let mouse = Vec2::new(mouse_position().0, mouse_position().1);
-            let mut snap_point = mouse;
-
-            let mut max_distance = self.options.snap_radius;
-
-            for intersection in self.intersections.iter() {
-                if intersection.distance(mouse) <= max_distance {
-                    snap_point = *intersection;
-                    max_distance = intersection.distance(mouse);
-                }
-            }
-
-            self.handle_input(snap_point);
-            clear_background(self.style.palette.background);
-            self.draw(mouse, snap_point);
+            self.get_snap_point(config);
+            self.handle_input(config);
+            self.draw(config);
             next_frame().await;
         }
     }
 
-    fn draw(&self, mouse: Vec2, snap_point: Vec2) {
-        self.draw_shapes(snap_point);
+    fn draw(&self, config: &EuclidConfig) {
+        clear_background(config.background);
 
-        if self.options.show_intersections {
-            self.draw_intersections();
+        if self.show_interface {
+            utils::draw_filled_circle(self.mouse, config.point_size, config.guide);
+
+            utils::draw_segment(
+                    self.mouse,
+            self.snap_point,
+            config.guide,
+            config.line_thickness,
+            );
+
+            utils::draw_filled_circle(self.snap_point, config.point_size, config.highlight);
         }
 
-        self.draw_points(mouse, snap_point);
+        self.draw_constructions(config);
+        self.draw_guides(config);
 
-        if self.options.show_interface {
-            self.draw_interface();
+        if self.show_intersections {
+            self.draw_intersections(config);
+        }
+
+        self.draw_points(config);
+
+        if self.show_interface {
+            self.draw_interface(config);
         }
     }
 
-    fn handle_input(&mut self, snap_point: Vec2) {
+    fn get_snap_point(&mut self, config: &EuclidConfig) {
+        self.mouse = Vec2::new(mouse_position().0, mouse_position().1);
+
+        let mut snap_point = self.mouse;
+        let mut max_distance = config.snap_radius;
+
+        for intersection in self.intersections.iter() {
+            if intersection.distance(self.mouse) <= max_distance {
+                snap_point = *intersection;
+                max_distance = intersection.distance(self.mouse);
+            }
+        }
+
+        self.snap_point = snap_point;
+    }
+
+    fn handle_input(&mut self, config: &EuclidConfig) {
         if is_mouse_button_pressed(MouseButton::Left) {
-            self.points.push(snap_point);
+            self.points.push(self.snap_point);
         } else if is_mouse_button_pressed(MouseButton::Right) {
             self.points.clear();
         }
 
-        if self.points.len() as u8 == self.tools[self.options.current_tool_index].num_points() {
-            let shape = self.tools[self.options.current_tool_index].get_shape(&self.points);
+        if self.points.len() as u8 == self.tools[self.tool_i].num_points() {
+            let shape = self.tools[self.tool_i].get_shape(&self.points);
 
             let construction = Construction {
                 shape,
-                layer: self.options.current_layer_index,
-                color: self.style.tool_colors[self.options.current_color_index],
+                layer: self.layer_i,
+                color: config.tool_colors[self.color_i],
             };
 
             self.add_construction(construction);
@@ -176,12 +140,10 @@ impl Euclid {
         }
 
         if mouse_wheel().1 < 0.0 {
-            self.options.current_color_index = (self.options.current_color_index
-                + (self.style.tool_colors.len() - 1))
-                % self.style.tool_colors.len();
+            self.color_i =
+                (self.color_i + (config.tool_colors.len() - 1)) % config.tool_colors.len();
         } else if mouse_wheel().1 > 0.0 || is_key_pressed(KeyCode::LeftShift) {
-            self.options.current_color_index =
-                (self.options.current_color_index + 1) % self.style.tool_colors.len();
+            self.color_i = (self.color_i + 1) % config.tool_colors.len();
         }
 
         match get_last_key_pressed() {
@@ -200,173 +162,198 @@ impl Euclid {
             }
 
             Some(KeyCode::Tab) => {
-                self.options.current_tool_index =
-                    (self.options.current_tool_index + 1) % self.tools.len();
+                self.tool_i = (self.tool_i + 1) % self.tools.len();
             }
 
             Some(KeyCode::F1) => {
-                self.options.current_tool_index = 0;
+                self.tool_i = 0;
             }
 
             Some(KeyCode::F2) => {
-                self.options.current_tool_index = 1;
+                self.tool_i = 1;
             }
 
             Some(KeyCode::F3) => {
-                self.options.current_tool_index = 2;
+                self.tool_i = 2;
             }
 
             Some(KeyCode::F4) => {
-                self.options.current_tool_index = 3;
+                self.tool_i = 3;
             }
 
             Some(KeyCode::F5) => {
-                self.options.current_layer_index = 0;
+                self.layer_i = 0;
             }
 
             Some(KeyCode::F6) => {
-                self.options.current_layer_index = 1;
+                self.layer_i = 1;
             }
 
             Some(KeyCode::F7) => {
-                self.options.current_layer_index = 2;
+                self.layer_i = 2;
             }
 
             Some(KeyCode::F8) => {
-                self.options.current_layer_index = 3;
+                self.layer_i = 3;
             }
 
             Some(KeyCode::F9) => {
-                self.options.show_intersections = !self.options.show_intersections;
+                self.show_intersections = !self.show_intersections;
             }
 
             Some(KeyCode::F10) => {
-                self.options.show_guides = !self.options.show_guides;
+                self.show_guides = !self.show_guides;
             }
 
             Some(KeyCode::F11) => {
-                self.options.show_interface = !self.options.show_interface;
+                self.show_interface = !self.show_interface;
             }
 
             Some(KeyCode::F12) => {
-                self.layers[self.options.current_layer_index] =
-                    self.layers[self.options.current_layer_index].next();
+                self.show_layer[self.layer_i] = !self.show_layer[self.layer_i];
             }
 
             _ => (),
         };
     }
 
-    fn draw_shapes(&self, snap_point: Vec2) {
+    fn draw_constructions(&self, config: &EuclidConfig) {
         for construction in self.constructions.iter() {
-            if self.options.show_guides || construction.color != self.style.palette.guide {
-                if self.layers[construction.layer] == LayerState::Visible {
-                    construction.draw(self.options.line_thickness);
+            if self.show_guides || construction.color != config.guide {
+                if self.show_layer[construction.layer] {
+                    construction.draw(config.line_thickness);
                 }
             }
         }
+    }
 
+    fn draw_guides(&self, config: &EuclidConfig) {
         if self.points.len() > 0 {
-            self.tools[self.options.current_tool_index].draw_guide(
+            self.tools[self.tool_i].draw_guide(
                 &self.points,
-                snap_point,
-                utils::set_opacity(
-                    self.style.tool_colors[self.options.current_color_index],
-                    0.4,
-                ),
-                self.options.line_thickness,
+                self.snap_point,
+                utils::set_opacity(config.tool_colors[self.color_i], 0.4),
+                config.line_thickness,
             );
         }
     }
 
-    fn draw_interface(&self) {
-        let style = &self.style;
-
-        let text_params = TextParams {
-            font: style.font,
-            font_size: style.font_size,
-            color: style.palette.foreground,
+    fn draw_interface(&self, config: &EuclidConfig) {
+        let mut text_params = TextParams {
+            font: config.font,
+            font_size: config.font_size,
+            color: config.foreground,
             font_scale: 1.0,
             font_scale_aspect: 1.0,
         };
 
-        let text_height = measure_text("S", Some(style.font), style.font_size, 1.0).height;
+        fn list_options(
+            config: &EuclidConfig,
+            options: Vec<String>,
+            selected: usize,
+            y: &mut f32,
+            line_height: f32,
+            params: &mut TextParams,
+            f_offset: usize,
+        ) {
+            for (i, option) in options.iter().enumerate() {
+                if selected == i {
+                    params.color = config.highlight;
+                }
+
+                let text = format!(" F{:2}: {}", i + f_offset, option);
+
+                draw_text_ex(&text, config.padding, *y, *params);
+
+                if i != options.len() - 1 {
+                    *y = *y + line_height;
+                }
+
+                params.color = config.foreground;
+            }
+        }
+
+        let text_height = measure_text("S", Some(config.font), config.font_size, 1.0).height;
 
         let radius = 8.0;
         let line_space = 3.0;
 
-        let mut y = style.padding + text_height;
+        let mut y = config.padding + text_height;
 
-        draw_text_ex("Euclid Geometry Engine", style.padding, y, text_params);
+        let mut tool_names = Vec::new();
+        for tool in self.tools.iter() {
+            tool_names.push(String::from(tool.name()))
+        }
 
-        y = y + text_height + style.padding;
+        let mut layer_stats = Vec::new();
+        for layer in self.show_layer {
+            layer_stats.push(String::from(if layer { "Visible" } else { "Hidden" }))
+        }
 
-        draw_text_ex("Tools", style.padding, y, text_params);
+        draw_text_ex("Euclid Geometry Engine", config.padding, y, text_params);
+
+        y = y + text_height + config.padding;
+
+        draw_text_ex("Tools", config.padding, y, text_params);
 
         y = y + text_height + line_space;
 
-        for (i, tool) in self.tools.iter().enumerate() {
-            let text = if i == self.options.current_tool_index {
-                format!("> F{}: {}", i + 1, tool.name())
-            } else {
-                format!("  F{}: {}", i + 1, tool.name())
-            };
+        list_options(
+            config,
+            tool_names,
+            self.tool_i,
+            &mut y,
+            text_height + line_space,
+            &mut text_params,
+            1,
+        );
 
-            draw_text_ex(&text, style.padding, y, text_params);
+        y = y + text_height + config.padding;
 
-            if i != self.tools.len() - 1 {
-                y = y + text_height + line_space;
-            }
-        }
-
-        y = y + text_height + style.padding;
-
-        draw_text_ex("Layers", style.padding, y, text_params);
+        draw_text_ex("Layers", config.padding, y, text_params);
 
         y = y + text_height + line_space;
 
-        for (i, layer) in self.layers.iter().enumerate() {
-            let text = if i == self.options.current_layer_index {
-                format!("> F{}: {}", i + 5, layer.to_str())
-            } else {
-                format!("  F{}: {}", i + 5, layer.to_str())
-            };
+        list_options(
+            config,
+            layer_stats,
+            self.layer_i,
+            &mut y,
+            text_height + line_space,
+            &mut text_params,
+            5,
+        );
 
-            draw_text_ex(&text, style.padding, y, text_params);
+        y = y + text_height + config.padding;
 
-            if i != self.layers.len() - 1 {
-                y = y + text_height + line_space;
-            }
-        }
-
-        y = y + text_height + style.padding;
-
-        draw_text_ex("Show/Hide", style.padding, y, text_params);
+        draw_text_ex("Show/Hide", config.padding, y, text_params);
 
         y = y + text_height + line_space;
 
-        for (i, layer) in ["Intersections", "Guides", "Interface", "Layer"]
-            .iter()
-            .enumerate()
-        {
-            let text = format!("  F{}: {}", i + 9, layer);
+        list_options(
+            config,
+            vec![
+                String::from("Intersections"),
+                String::from("Guides"),
+                String::from("Interface"),
+                String::from("Layer"),
+            ],
+            usize::MAX,
+            &mut y,
+            text_height + line_space,
+            &mut text_params,
+            9,
+        );
 
-            draw_text_ex(&text, style.padding, y, text_params);
+        y = y + text_height + config.padding;
 
-            if i != self.layers.len() - 1 {
-                y = y + text_height + line_space;
-            }
-        }
-
-        y = y + text_height + style.padding;
-
-        draw_text_ex("Stats", style.padding, y, text_params);
+        draw_text_ex("Stats", config.padding, y, text_params);
 
         y = y + text_height + line_space;
 
         draw_text_ex(
             &format!("  Shapes: {}", self.constructions.len()),
-            style.padding,
+            config.padding,
             y,
             text_params,
         );
@@ -375,7 +362,7 @@ impl Euclid {
 
         draw_text_ex(
             &format!("  Intersections: {}", self.intersections.len()),
-            style.padding,
+            config.padding,
             y,
             text_params,
         );
@@ -388,18 +375,16 @@ impl Euclid {
                 macroquad::time::get_frame_time(),
                 macroquad::time::get_fps()
             ),
-            style.padding,
+            config.padding,
             y,
             text_params,
         );
 
-        for (i, color) in self.style.tool_colors.iter().enumerate() {
-            let x = screen_width() / 2.0
-                + (i as f32 - (self.style.tool_colors.len() as f32 / 2.0))
-                    * (radius * 2.0 + self.style.padding);
-            let mut y = screen_height() - self.style.padding - radius - radius;
+        for (i, color) in config.tool_colors.iter().enumerate() {
+            let x = (screen_width() / 2.0) + (i as f32 - ((config.tool_colors.len() - 1) as f32 / 2.0)) * (radius * 2.0 + config.padding);
+            let mut y = screen_height() - config.padding - radius - radius;
 
-            if i == self.options.current_color_index {
+            if i == self.color_i {
                 y -= radius / 1.5;
             }
 
@@ -407,34 +392,15 @@ impl Euclid {
         }
     }
 
-    fn draw_points(&self, mouse: Vec2, snap_point: Vec2) {
-        utils::draw_filled_circle(mouse, self.options.point_size, self.style.palette.guide);
-
-        utils::draw_segment(
-            mouse,
-            snap_point,
-            self.style.palette.guide,
-            self.options.line_thickness,
-        );
-
-        utils::draw_filled_circle(
-            snap_point,
-            self.options.point_size,
-            self.style.palette.tool_c,
-        );
-
+    fn draw_points(&self, config: &EuclidConfig) {
         for point in self.points.iter() {
-            utils::draw_filled_circle(*point, self.options.point_size, self.style.palette.tool_c)
+            utils::draw_filled_circle(*point, config.point_size, config.highlight);
         }
     }
 
-    fn draw_intersections(&self) {
+    fn draw_intersections(&self, config: &EuclidConfig) {
         for intersection in self.intersections.iter() {
-            utils::draw_filled_circle(
-                *intersection,
-                self.options.point_size,
-                self.style.palette.tool_a,
-            )
+            utils::draw_filled_circle(*intersection, config.point_size, config.highlight)
         }
     }
 

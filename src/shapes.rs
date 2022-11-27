@@ -156,7 +156,7 @@ impl Shape {
             let m = (a.pos.x - b.pos.x) / (b.pos.y - a.pos.y);
 
             if m.is_infinite() {
-                panic!("vertical circle-circle points");
+                println!("[WARN] vertical circle-circle points");
             }
 
             let c = ((a.pos.x * a.pos.x) + (a.pos.y * a.pos.y)
@@ -181,7 +181,7 @@ impl Shape {
         let c = -m * b.p1.x + b.p1.y;
 
         if m.is_infinite() {
-            panic!("vertical circle-line intersections")
+            println!("[WARN] vertical circle-line intersections")
         }
 
         let d = ((m * m + 1.0) * (a.r * a.r)) - f32::powi(a.pos.x * m - a.pos.y + c, 2);
