@@ -66,6 +66,7 @@ impl Euclid {
 
     pub async fn run(&mut self, config: &EuclidConfig) {
         loop {
+            clear_background(config.background);
             self.get_snap_point(config);
             self.handle_input(config);
             self.draw(config);
@@ -74,8 +75,6 @@ impl Euclid {
     }
 
     fn draw(&self, config: &EuclidConfig) {
-        clear_background(config.background);
-
         if self.show_interface {
             utils::draw_filled_circle(self.mouse, config.point_size, config.guide);
 

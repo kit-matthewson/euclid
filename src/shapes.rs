@@ -157,6 +157,7 @@ impl Shape {
 
             if m.is_infinite() {
                 println!("[WARN] vertical circle-circle points");
+                return Vec::new();
             }
 
             let c = ((a.pos.x * a.pos.x) + (a.pos.y * a.pos.y)
@@ -181,7 +182,17 @@ impl Shape {
         let c = -m * b.p1.x + b.p1.y;
 
         if m.is_infinite() {
-            println!("[WARN] vertical circle-line intersections")
+            let x = b.p1.x;
+
+            let pb = 2.0 * a.pos.y;
+            let pc = f32::powi(x - a.pos.x, 2) + (a.pos.y * a.pos.y) - (a.r * a.r);
+
+            let d = f32::sqrt((pb * pb) - (4.0 * pc));
+
+            let y1 = (pb + d) / 2.0;
+            let y2 = (pb - d) / 2.0;
+
+            return vec![Vec2::new(x, y1), Vec2::new(x, y2)];
         }
 
         let d = ((m * m + 1.0) * (a.r * a.r)) - f32::powi(a.pos.x * m - a.pos.y + c, 2);
