@@ -1,0 +1,21 @@
+high_dpi: true
+
+colors:
+  tools:
+  - #000000
+  - #000000
+  - #000000
+  - #000000
+  - #000000
+
+  fg: #000000
+  bg: #000000
+  
+  guide: #000000
+  highlight: #000000
+
+font_size: 12
+
+snap_radious: 15.0
+line_thickness: 1.0
+point_size: 2.0

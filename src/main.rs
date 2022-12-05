@@ -3,18 +3,24 @@ mod shapes;
 mod tool;
 mod utils;
 
+use std::fs;
+
 use euclid::*;
 use macroquad::{miniquad::conf::Platform, prelude::*};
 use shapes::{Construction, LineData};
+use yaml_rust::YamlLoader;
 
 fn window_conf() -> Conf {
+    let config_str = fs::read_to_string("config.yml").expect("could not read config.yml");
+    let config = YamlLoader::load_from_str(&config_str).expect("could not parse config yaml");
+    println!("{:?}", config[0].as_str());
     Conf {
         window_title: String::from("Euclid"),
         window_width: 0,
         window_height: 0,
-        high_dpi: false,
+        high_dpi: true,
         fullscreen: true,
-        sample_count: 0,
+        sample_count: 1,
         window_resizable: true,
         icon: None,
         platform: Platform::default(),
@@ -74,5 +80,5 @@ async fn main() {
         color: config.guide,
     });
 
-    euclid.run(&config).await
+    euclid.run(&config).await;
 }
