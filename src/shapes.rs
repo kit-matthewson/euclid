@@ -166,9 +166,7 @@ impl Shape {
 
                 let y1 = (-pb + d) / 2.0;
                 let y2 = (-pb - d) / 2.0;
-
-                utils::draw_line(Vec2::new(x, y1), Vec2::new(x, y2), RED, 2.0);
-
+                
                 return vec![Vec2::new(x, y1), Vec2::new(x, y2)];
             }
 
