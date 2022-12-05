@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 macroquad = { version = "0.3", optional = false }
 libm = "0.2"
+yaml-rust = "0.4.5"

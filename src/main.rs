@@ -12,9 +12,9 @@ fn window_conf() -> Conf {
         window_title: String::from("Euclid"),
         window_width: 0,
         window_height: 0,
-        high_dpi: true,
+        high_dpi: false,
         fullscreen: true,
-        sample_count: 5,
+        sample_count: 0,
         window_resizable: true,
         icon: None,
         platform: Platform::default(),
@@ -56,23 +56,23 @@ async fn main() {
 
     let mut euclid = Euclid::new();
 
-        euclid.add_construction(Construction {
-            shape: shapes::Shape::Line(LineData {
-                p1: Vec2::new(1.0, screen_height() / 2.0),
-                p2: Vec2::new(-1.0, screen_height() / 2.0),
-            }),
-            layer: 0,
-            color: config.guide,
-        });
+    euclid.add_construction(Construction {
+        shape: shapes::Shape::Line(LineData {
+            p1: Vec2::new(1.0, screen_height() / 2.0),
+            p2: Vec2::new(-1.0, screen_height() / 2.0),
+        }),
+        layer: 0,
+        color: config.guide,
+    });
 
-        euclid.add_construction(Construction {
-            shape: shapes::Shape::Line(LineData {
-                p1: Vec2::new(screen_width() / 2.0, 1.0),
-                p2: Vec2::new(screen_width() / 2.0, -1.0),
-            }),
-            layer: 0,
-            color: config.guide,
-        });
+    euclid.add_construction(Construction {
+        shape: shapes::Shape::Line(LineData {
+            p1: Vec2::new(screen_width() / 2.0, 1.0),
+            p2: Vec2::new(screen_width() / 2.0, -1.0),
+        }),
+        layer: 0,
+        color: config.guide,
+    });
 
     euclid.run(&config).await
 }
