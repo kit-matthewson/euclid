@@ -30,7 +30,6 @@ impl Construction {
     }
 }
 
-#[allow(dead_code)]
 pub enum Shape {
     Circle(CircleData),
     Line(LineData),
@@ -72,10 +71,8 @@ impl SegmentData {
         let mut valid = Vec::new();
 
         for point in points {
-            if (self.p1.x < point.x && point.x < self.p2.x)
-                || (self.p2.x < point.x && point.x < self.p1.x)
-                    && (self.p1.y < point.y && point.y < self.p2.y)
-                || (self.p2.y < point.y && point.y < self.p1.y)
+            if utils::within(point.x, self.p1.x, self.p2.x)
+                && utils::within(point.y, self.p1.y, self.p2.y)
             {
                 valid.push(point);
             }
@@ -166,7 +163,7 @@ impl Shape {
 
                 let y1 = (-pb + d) / 2.0;
                 let y2 = (-pb - d) / 2.0;
-                
+
                 return vec![Vec2::new(x, y1), Vec2::new(x, y2)];
             }
 

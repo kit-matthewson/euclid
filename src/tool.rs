@@ -1,9 +1,12 @@
+use std::vec;
+
 use macroquad::prelude::{Color, Vec2};
 
 use crate::{shapes::*, utils};
 
 pub trait Tool {
     fn name(&self) -> &str;
+    fn instructions(&self) -> Vec<&str>;
     fn num_points(&self) -> u8;
     fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32);
     fn get_shape(&self, points: &Vec<Vec2>) -> Shape;
@@ -17,6 +20,10 @@ pub struct Arc;
 impl Tool for Compass {
     fn name(&self) -> &str {
         "Compass"
+    }
+
+    fn instructions(&self) -> Vec<&str> {
+        vec!["Select center", "Select radius"]
     }
 
     fn num_points(&self) -> u8 {
@@ -40,6 +47,10 @@ impl Tool for StraightEdge {
         "Straight Edge"
     }
 
+    fn instructions(&self) -> Vec<&str> {
+        vec!["Select first point", "Select second point"]
+    }
+
     fn num_points(&self) -> u8 {
         2
     }
@@ -59,6 +70,10 @@ impl Tool for StraightEdge {
 impl Tool for LineSegment {
     fn name(&self) -> &str {
         "Line Segment"
+    }
+
+    fn instructions(&self) -> Vec<&str> {
+        vec!["Select start", "Select end"]
     }
 
     fn num_points(&self) -> u8 {
@@ -82,6 +97,10 @@ impl Tool for Arc {
         "Arc"
     }
 
+    fn instructions(&self) -> Vec<&str> {
+        vec!["Select center", "Select radius", "Select start", "Select end"]
+    }
+
     fn num_points(&self) -> u8 {
         4
     }
@@ -89,6 +108,7 @@ impl Tool for Arc {
     fn draw_guide(&self, points: &Vec<Vec2>, mouse: Vec2, color: Color, thickness: f32) {
         if points.len() == 1 {
             utils::draw_circle(points[0], points[0].distance(mouse), color, thickness);
+            utils::draw_segment(points[0], mouse, color, thickness)
         } else if points.len() == 2 {
             utils::draw_circle(points[0], points[0].distance(points[1]), color, thickness);
             utils::draw_segment(
