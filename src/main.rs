@@ -7,17 +7,17 @@ use std::fs;
 
 use euclid::*;
 use macroquad::{miniquad::conf::Platform, prelude::*};
-use shapes::{Construction, LineData};
+use shapes::{Construction, SegmentData};
 use yaml_rust::YamlLoader;
 
 fn window_conf() -> Conf {
     Conf {
         window_title: String::from("Euclid"),
-        window_width: 1920,
-        window_height: 1080,
+        window_width: 0,
+        window_height: 0,
         high_dpi: true,
-        fullscreen: false,
-        sample_count: 0,
+        fullscreen: true,
+        sample_count: 1,
         window_resizable: true,
         icon: None,
         platform: Platform::default(),
@@ -26,11 +26,14 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let config_str = fs::read_to_string("config.yml").expect("could not read config.yml");
+    let _config = YamlLoader::load_from_str(&config_str).expect("could not parse config yaml");
+
     let roboto = load_ttf_font("./assets/fonts/RobotoMono.ttf")
         .await
         .expect("failed to load font");
 
-    let config_file = fs::read_to_string("config.yml").expect("could not read config file");
+    let _config_file = fs::read_to_string("config.yml").expect("could not read config file");
 
     let black = Color::from_rgba(10, 10, 10, 255);
     let gray = Color::from_rgba(168, 154, 132, 150);
@@ -62,22 +65,22 @@ async fn main() {
     let mut euclid = Euclid::new();
 
     euclid.add_construction(Construction {
-        shape: shapes::Shape::Line(LineData {
-            p1: Vec2::new(1.0, screen_height() / 2.0),
-            p2: Vec2::new(-1.0, screen_height() / 2.0),
+        shape: shapes::Shape::Segment(SegmentData {
+            p1: Vec2::new(screen_width() / 2.0 - 10.0, screen_height() / 2.0),
+            p2: Vec2::new(screen_width() / 2.0 + 10.0, screen_height() / 2.0),
         }),
         layer: 0,
         color: config.guide,
     });
 
     euclid.add_construction(Construction {
-        shape: shapes::Shape::Line(LineData {
-            p1: Vec2::new(screen_width() / 2.0, 1.0),
-            p2: Vec2::new(screen_width() / 2.0, -1.0),
+        shape: shapes::Shape::Segment(SegmentData {
+            p1: Vec2::new(screen_width() / 2.0, screen_height() / 2.0 - 10.0),
+            p2: Vec2::new(screen_width() / 2.0, screen_height() / 2.0 + 10.0),
         }),
         layer: 0,
         color: config.guide,
     });
 
-    euclid.run(&config).await
+    euclid.run(&config).await;
 }

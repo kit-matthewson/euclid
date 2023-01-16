@@ -106,3 +106,15 @@ pub fn arc_angle(point: Vec2, centre: Vec2) -> f32 {
 pub fn set_opacity(color: Color, a: f32) -> Color {
     Color::new(color.r, color.g, color.b, a)
 }
+
+pub fn within(v: f32, a: f32, b: f32) -> bool {
+    return f32::min(a, b) <= v && v <= f32::max(a, b);
+}
+
+pub fn mod_inc(n: usize, max: usize) -> usize {
+    return (n + 1) % max;
+}
+
+pub fn mod_dec(n: usize, max: usize) -> usize {
+    return (n + (max - 1)) % max;
+}

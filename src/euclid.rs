@@ -139,10 +139,9 @@ impl Euclid {
         }
 
         if mouse_wheel().1 < 0.0 {
-            self.color_i =
-                (self.color_i + (config.tool_colors.len() - 1)) % config.tool_colors.len();
-        } else if mouse_wheel().1 > 0.0 || is_key_pressed(KeyCode::LeftShift) {
-            self.color_i = (self.color_i + 1) % config.tool_colors.len();
+            self.color_i = utils::mod_dec(self.color_i, config.tool_colors.len());
+        } else if mouse_wheel().1 > 0.0 {
+            self.color_i = utils::mod_inc(self.color_i, config.tool_colors.len());
         }
 
         match get_last_key_pressed() {
@@ -166,59 +165,53 @@ impl Euclid {
             },
 
             Some(KeyCode::Tab) => {
-                self.tool_i = (self.tool_i + 1) % self.tools.len();
-            }
-
-            Some(KeyCode::F1) => {
-                self.tool_i = 0;
-            }
-
-            Some(KeyCode::F2) => {
-                self.tool_i = 1;
-            }
-
-            Some(KeyCode::F3) => {
-                self.tool_i = 2;
-            }
-
-            Some(KeyCode::F4) => {
-                self.tool_i = 3;
-            }
-
-            Some(KeyCode::F5) => {
-                self.layer_i = 0;
-            }
-
-            Some(KeyCode::F6) => {
-                self.layer_i = 1;
-            }
-
-            Some(KeyCode::F7) => {
-                self.layer_i = 2;
-            }
-
-            Some(KeyCode::F8) => {
-                self.layer_i = 3;
-            }
-
-            Some(KeyCode::F9) => {
-                self.show_intersections = !self.show_intersections;
-            }
-
-            Some(KeyCode::F10) => {
-                self.show_guides = !self.show_guides;
-            }
-
-            Some(KeyCode::F11) => {
-                self.show_interface = !self.show_interface;
-            }
-
-            Some(KeyCode::F12) => {
-                self.show_layer[self.layer_i] = !self.show_layer[self.layer_i];
+                if is_key_down(KeyCode::LeftShift) {
+                    self.tool_i = utils::mod_dec(self.tool_i, self.tools.len());
+                } else {
+                    self.tool_i = utils::mod_inc(self.tool_i, self.tools.len());
+                }
             }
 
             _ => (),
         };
+
+        let last_key = get_last_key_pressed();
+
+        if last_key.is_some() {
+            let code = last_key.unwrap() as u8;
+
+            if 69 <= code && code <= 72 {
+                if self.points.len() as u8 > 1 {
+                    self.points.clear();
+                }
+
+                self.tool_i = (code - 69) as usize;
+            }
+
+            if 73 <= code && code <= 76 {
+                self.layer_i = (code - 73) as usize;
+            }
+
+            match last_key.unwrap() {
+                KeyCode::F9 => {
+                    self.show_intersections = !self.show_intersections;
+                }
+
+                KeyCode::F10 => {
+                    self.show_guides = !self.show_guides;
+                }
+
+                KeyCode::F11 => {
+                    self.show_interface = !self.show_interface;
+                }
+
+                KeyCode::F12 => {
+                    self.show_layer[self.layer_i] = !self.show_layer[self.layer_i];
+                }
+
+                _ => (),
+            }
+        }
     }
 
     fn draw_constructions(&self, config: &EuclidConfig) {
@@ -384,6 +377,20 @@ impl Euclid {
             text_params,
         );
 
+        draw_text_ex(
+            &(self.tools[self.tool_i].name().to_owned() + ":"),
+            config.padding,
+            screen_height() - config.padding - config.padding,
+            text_params,
+        );
+
+        draw_text_ex(
+            self.tools[self.tool_i].instructions()[self.points.len()],
+            config.padding,
+            screen_height() - config.padding - config.padding + text_height + line_space,
+            text_params,
+        );
+
         for (i, color) in config.tool_colors.iter().enumerate() {
             let x = (screen_width() / 2.0)
                 + (i as f32 - ((config.tool_colors.len() - 1) as f32 / 2.0))
@@ -411,6 +418,8 @@ impl Euclid {
     }
 
     pub fn add_construction(&mut self, construction: Construction) {
+        // Remove duplicates? Would me redoing undoing.
+
         for other in self.constructions.iter() {
             self.intersections
                 .append(&mut construction.shape.intersections(&other.shape));
