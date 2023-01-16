@@ -6,7 +6,7 @@ pub fn draw_circle(pos: Vec2, r: f32, color: Color, thickness: f32) {
     macroquad::prelude::draw_poly_lines(
         pos.x,
         pos.y,
-        ((r + 10.0) / 2.0) as u8,
+        circle_poly_sides(r),
         r,
         0.0,
         thickness,
@@ -15,7 +15,11 @@ pub fn draw_circle(pos: Vec2, r: f32, color: Color, thickness: f32) {
 }
 
 pub fn draw_filled_circle(pos: Vec2, r: f32, color: Color) {
-    macroquad::prelude::draw_poly(pos.x, pos.y, ((r + 10.0) / 2.0) as u8, r, 0.0, color)
+    macroquad::prelude::draw_poly(pos.x, pos.y, circle_poly_sides(r), r, 0.0, color)
+}
+
+fn circle_poly_sides(r: f32) -> u8 {
+    return (r as u8 / 2) + 10;
 }
 
 pub fn draw_line(p1: Vec2, p2: Vec2, color: Color, thickness: f32) {

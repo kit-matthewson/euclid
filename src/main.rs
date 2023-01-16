@@ -3,17 +3,20 @@ mod shapes;
 mod tool;
 mod utils;
 
+use std::fs;
+
 use euclid::*;
 use macroquad::{miniquad::conf::Platform, prelude::*};
 use shapes::{Construction, LineData};
+use yaml_rust::YamlLoader;
 
 fn window_conf() -> Conf {
     Conf {
         window_title: String::from("Euclid"),
-        window_width: 0,
-        window_height: 0,
-        high_dpi: false,
-        fullscreen: true,
+        window_width: 1920,
+        window_height: 1080,
+        high_dpi: true,
+        fullscreen: false,
         sample_count: 0,
         window_resizable: true,
         icon: None,
@@ -26,6 +29,8 @@ async fn main() {
     let roboto = load_ttf_font("./assets/fonts/RobotoMono.ttf")
         .await
         .expect("failed to load font");
+
+    let config_file = fs::read_to_string("config.yml").expect("could not read config file");
 
     let black = Color::from_rgba(10, 10, 10, 255);
     let gray = Color::from_rgba(168, 154, 132, 150);
