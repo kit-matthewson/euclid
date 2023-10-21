@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-macroquad = { version = "0.3", optional = false }
+eframe = "0.22"
+egui = "0.22"
+
 libm = "0.2"
-yaml-rust = "0.4.5"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
