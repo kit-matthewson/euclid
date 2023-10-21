@@ -1,17 +1,16 @@
 use eframe::App;
+use egui::{Color32, Pos2};
 
-use crate::{engine::Engine, ui};
+use crate::{
+    engine::{
+        shapes::{CircleData, Construction, LineData, Shape},
+        Engine,
+    },
+    ui,
+};
 
 pub struct Euclid {
     engine: Engine,
-}
-
-impl Default for Euclid {
-    fn default() -> Self {
-        Self {
-            engine: Engine::default(),
-        }
-    }
 }
 
 impl App for Euclid {
@@ -71,7 +70,7 @@ impl App for Euclid {
                             && ui.pointer_coordinate_drag_delta().length_sq() == 0.0
                         {
                             if let Some(point) = ui.pointer_coordinate() {
-                                self.engine.register_click(point);
+                                self.engine.click(point);
                             }
                         }
 
@@ -79,5 +78,41 @@ impl App for Euclid {
                     });
             });
         });
+    }
+}
+
+impl Default for Euclid {
+    fn default() -> Self {
+        Self {
+            engine: Engine::default(),
+        }
+    }
+}
+
+impl Euclid {
+    pub fn new_debug() -> Self {
+        let mut euclid = Euclid::default();
+
+        euclid.engine.add_construction(Construction {
+            shape: Shape::Circle(CircleData {
+                pos: Pos2::ZERO,
+                r: 1.0,
+            }),
+            layer: 0,
+            color: Color32::BLUE,
+            width: 1.0,
+        });
+
+        euclid.engine.add_construction(Construction {
+            shape: Shape::Line(LineData {
+                p1: Pos2::ZERO,
+                p2: Pos2::new(1.0, 1.0),
+            }),
+            layer: 0,
+            color: Color32::BLUE,
+            width: 1.0,
+        });
+
+        euclid
     }
 }

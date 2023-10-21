@@ -37,7 +37,7 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "euclid",
         native_options,
-        Box::new(|_cc| Box::new(app::Euclid::default())),
+        Box::new(|_cc| Box::new(app::Euclid::new_debug())),
     )
 }
 

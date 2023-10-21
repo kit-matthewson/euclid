@@ -1,17 +1,28 @@
-use egui::plot::{PlotPoint, Points};
+pub mod shapes;
+pub mod tools;
+pub mod utils;
 
-#[derive(Debug)]
+use egui::{
+    plot::{PlotPoint, Points},
+    Color32, Pos2,
+};
+
+use self::shapes::Construction;
+
 pub struct Engine {
     points: Vec<egui::Vec2>,
-    intersections: Vec<PlotPoint>,
+    intersections: Vec<Pos2>,
+    constructions: Vec<Construction>,
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct EngineStats {
-    #[serde(rename = "number of points")]
+    #[serde(rename = "points")]
     num_points: usize,
-    #[serde(rename = "number of intersections")]
+    #[serde(rename = "intersections")]
     num_intersections: usize,
+    #[serde(rename = "constructions")]
+    num_constructions: usize,
 }
 
 impl EngineStats {
@@ -19,6 +30,7 @@ impl EngineStats {
         EngineStats {
             num_points: engine.points.len(),
             num_intersections: engine.intersections.len(),
+            num_constructions: engine.constructions.len(),
         }
     }
 }
@@ -28,21 +40,48 @@ impl Default for Engine {
         Engine {
             points: Vec::new(),
             intersections: Vec::new(),
+            constructions: Vec::new(),
         }
     }
 }
 
 impl Engine {
     pub fn show(&self, ui: &mut egui::plot::PlotUi) {
-        ui.points(Points::new(
-            self.points
-                .iter()
-                .map(|point| [point.x as f64, point.y as f64])
-                .collect::<Vec<[f64; 2]>>(),
-        ));
+        for construction in &self.constructions {
+            ui.line(construction.get_line());
+        }
+
+        ui.points(
+            Points::new(
+                self.points
+                    .iter()
+                    .map(|point| [point.x as f64, point.y as f64])
+                    .collect::<Vec<[f64; 2]>>(),
+            )
+            .color(Color32::RED),
+        );
+
+        ui.points(
+            Points::new(
+                self.intersections
+                    .iter()
+                    .map(|point| [point.x as f64, point.y as f64])
+                    .collect::<Vec<[f64; 2]>>(),
+            )
+            .color(Color32::YELLOW),
+        );
     }
 
-    pub fn register_click(&mut self, point: PlotPoint) {
+    pub fn add_construction(&mut self, construction: Construction) {
+        for other in self.constructions.iter() {
+            self.intersections
+                .append(&mut construction.shape.intersections(&other.shape));
+        }
+
+        self.constructions.push(construction);
+    }
+
+    pub fn click(&mut self, point: PlotPoint) {
         self.points.push(point.to_vec2());
     }
 
