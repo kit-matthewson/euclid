@@ -42,11 +42,19 @@ impl App for Euclid {
             .resizable(false)
             .min_width(250.0)
             .show(ctx, |ui| {
-                if let Some(cpu_usage) = frame.info().cpu_usage {
-                    ui::grid::add_row(ui, "cpu time / ms", &format!("{:.2}", cpu_usage * 1000.0));
-                }
+                ui::grid::new("side-grid").show(ui, |ui| {
+                    if let Some(cpu_usage) = frame.info().cpu_usage {
+                        ui::grid::add_row(
+                            ui,
+                            "cpu time / ms",
+                            &format!("{:.2}", cpu_usage * 1000.0),
+                        );
+                    }
 
-                ui::grid::separator(ui);
+                    ui::grid::separator(ui);
+
+                    ui::grid::_add_struct(ui, self.engine.stats())
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -68,7 +76,7 @@ impl App for Euclid {
                         }
 
                         self.engine.show(ui);
-                    })
+                    });
             });
         });
     }
