@@ -10,9 +10,14 @@ use egui::{
 use self::shapes::Construction;
 
 pub struct Engine {
-    points: Vec<egui::Vec2>,
+    points: Vec<Pos2>,
     intersections: Vec<Pos2>,
     constructions: Vec<Construction>,
+
+    current_tool: &'static dyn tools::Tool,
+    current_layer: usize,
+    current_color: Color32,
+    current_width: f32,
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
@@ -41,6 +46,11 @@ impl Default for Engine {
             points: Vec::new(),
             intersections: Vec::new(),
             constructions: Vec::new(),
+
+            current_tool: &tools::Compass,
+            current_layer: 0,
+            current_color: Color32::WHITE,
+            current_width: 1.0,
         }
     }
 }
@@ -82,7 +92,25 @@ impl Engine {
     }
 
     pub fn click(&mut self, point: PlotPoint) {
-        self.points.push(point.to_vec2());
+        self.points.push(point.to_pos2());
+
+        if self.points.len() as u8 == self.current_tool.num_points() {
+            let shape = self.current_tool.get_shape(&self.points);
+
+            let construction = Construction {
+                shape,
+                layer: self.current_layer,
+                color: self.current_color,
+                width: self.current_width,
+            };
+
+            self.add_construction(construction);
+            self.points.clear();
+        }
+    }
+
+    pub fn clear_points(&mut self) {
+        self.points.clear();
     }
 
     pub fn stats(&self) -> EngineStats {

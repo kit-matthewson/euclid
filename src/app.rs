@@ -74,6 +74,10 @@ impl App for Euclid {
                             }
                         }
 
+                        if ui.plot_secondary_clicked() {
+                            self.engine.clear_points();
+                        }
+
                         self.engine.show(ui);
                     });
             });
