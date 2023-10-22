@@ -18,11 +18,11 @@ pub struct Arc;
 
 impl Tool for Compass {
     fn name(&self) -> &str {
-        "Compass"
+        "compass"
     }
 
     fn instructions(&self) -> Vec<&str> {
-        vec!["Select center", "Select radius"]
+        vec!["select center", "select radius"]
     }
 
     fn num_points(&self) -> u8 {
@@ -43,11 +43,11 @@ impl Tool for Compass {
 
 impl Tool for StraightEdge {
     fn name(&self) -> &str {
-        "Straight Edge"
+        "straight edge"
     }
 
     fn instructions(&self) -> Vec<&str> {
-        vec!["Select first point", "Select second point"]
+        vec!["select first point", "select second point"]
     }
 
     fn num_points(&self) -> u8 {
@@ -68,11 +68,11 @@ impl Tool for StraightEdge {
 
 impl Tool for LineSegment {
     fn name(&self) -> &str {
-        "Line Segment"
+        "line segment"
     }
 
     fn instructions(&self) -> Vec<&str> {
-        vec!["Select start", "Select end"]
+        vec!["select start", "select end"]
     }
 
     fn num_points(&self) -> u8 {
@@ -93,15 +93,15 @@ impl Tool for LineSegment {
 
 impl Tool for Arc {
     fn name(&self) -> &str {
-        "Arc"
+        "arc"
     }
 
     fn instructions(&self) -> Vec<&str> {
         vec![
-            "Select center",
-            "Select radius",
-            "Select start",
-            "Select end",
+            "select center",
+            "select radius",
+            "select start",
+            "select end",
         ]
     }
 
