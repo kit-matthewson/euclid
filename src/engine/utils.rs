@@ -21,6 +21,14 @@ pub fn line(p1: Pos2, p2: Pos2) -> plot::Line {
     let m = (p2.y - p1.y) as f64 / (p2.x - p1.x) as f64;
     let c = p1.y as f64 - (m * p1.x as f64);
 
+    if m.is_infinite() {
+        return Line::new(PlotPoints::from_parametric_callback(
+            move |t| (p1.x.into(), t),
+            0.0..=1.0,
+            512,
+        ));
+    }
+
     Line::new(PlotPoints::from_explicit_callback(
         move |x| (x * m) + c,
         ..,
