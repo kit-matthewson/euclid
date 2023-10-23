@@ -11,6 +11,12 @@ pub trait Tool {
     fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape;
 }
 
+impl PartialEq for (dyn Tool + 'static) {
+    fn eq(&self, other: &Self) -> bool {
+        self.name() == other.name()
+    }
+}
+
 pub struct Compass;
 pub struct StraightEdge;
 pub struct LineSegment;
