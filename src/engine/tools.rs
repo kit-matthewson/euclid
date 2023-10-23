@@ -1,5 +1,5 @@
 use egui::{plot, Pos2};
-use std::vec;
+use std::{f32::consts::PI, vec};
 
 use super::{shapes, utils};
 
@@ -123,7 +123,12 @@ impl Tool for Arc {
             ];
         } else if points.len() == 2 {
             return vec![
-                utils::circle(points[0], points[0].distance(points[1])),
+                utils::arc(
+                    points[0],
+                    points[0].distance(points[1]),
+                    utils::arc_angle(mouse, points[0]),
+                    utils::arc_angle(mouse, points[0]) + 1.0,
+                ),
                 utils::segment(
                     points[0],
                     points[0] + ((mouse - points[0]).normalized() * points[0].distance(points[1])),
