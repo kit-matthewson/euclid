@@ -1,4 +1,7 @@
-use egui::{plot, Pos2};
+use egui::{
+    plot::{self, PlotUi},
+    Pos2,
+};
 use std::vec;
 
 use super::{shapes, utils};
@@ -7,7 +10,7 @@ pub trait Tool {
     fn name(&self) -> &str;
     fn instructions(&self) -> Vec<&str>;
     fn num_points(&self) -> u8;
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2) -> Vec<plot::Line>;
+    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line>;
     fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape;
 }
 
@@ -35,7 +38,7 @@ impl Tool for Compass {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         vec![utils::circle(points[0], points[0].distance(mouse))]
     }
 
@@ -60,8 +63,13 @@ impl Tool for StraightEdge {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2) -> Vec<plot::Line> {
-        vec![utils::line(points[0], mouse)]
+    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line> {
+        vec![utils::line(
+            points[0],
+            mouse,
+            ui.plot_bounds().max()[1],
+            ui.plot_bounds().min()[1],
+        )]
     }
 
     fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape {
@@ -85,7 +93,7 @@ impl Tool for LineSegment {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         vec![utils::segment(points[0], mouse)]
     }
 
@@ -115,7 +123,7 @@ impl Tool for Arc {
         4
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         if points.len() == 1 {
             return vec![
                 utils::circle(points[0], points[0].distance(mouse)),

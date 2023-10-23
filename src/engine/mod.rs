@@ -1,15 +1,20 @@
+pub mod config;
 pub mod shapes;
 pub mod tools;
 pub mod utils;
+
+use std::cmp::Ordering;
 
 use egui::{
     plot::{PlotPoint, Points},
     Color32, Pos2,
 };
 
-use self::shapes::Construction;
+use self::{config::EngineConfig, shapes::Construction};
 
 pub struct Engine {
+    pub config: EngineConfig,
+
     points: Vec<Pos2>,
     intersections: Vec<Pos2>,
     constructions: Vec<Construction>,
@@ -43,6 +48,7 @@ impl EngineStats {
 impl Default for Engine {
     fn default() -> Self {
         Engine {
+            config: EngineConfig::default(),
             points: Vec::new(),
             intersections: Vec::new(),
             constructions: Vec::new(),
@@ -58,16 +64,27 @@ impl Default for Engine {
 impl Engine {
     pub fn show(&self, ui: &mut egui::plot::PlotUi) {
         for construction in &self.constructions {
-            ui.line(construction.get_line());
+            ui.line(construction.get_line(ui));
         }
 
         if let Some(mouse_pos) = ui.pointer_coordinate() {
+            let mouse_pos = mouse_pos.to_pos2();
+
+            let snap_pos = self.get_snap_pos(mouse_pos, self.config.snap_radius);
+
+            if snap_pos != mouse_pos {
+                ui.line(
+                    utils::segment(mouse_pos, snap_pos)
+                        .color(self.current_color.gamma_multiply(0.5)),
+                );
+            }
+
             if !self.points.is_empty() {
-                for line in self
-                    .current_tool
-                    .get_guides(&self.points, mouse_pos.to_pos2())
-                {
-                    ui.line(line.color(self.current_color.gamma_multiply(0.5)));
+                for line in self.current_tool.get_guides(&self.points, snap_pos, &ui) {
+                    ui.line(
+                        line.color(self.current_color.gamma_multiply(0.5))
+                            .width(self.current_width),
+                    );
                 }
             }
         }
@@ -93,6 +110,26 @@ impl Engine {
         );
     }
 
+    fn get_snap_pos(&self, mouse_pos: Pos2, snap_radius: f32) -> Pos2 {
+        let mut snap_pos = *self
+            .intersections
+            .iter()
+            .min_by(|a, b| {
+                if a.distance_sq(mouse_pos) < b.distance_sq(mouse_pos) {
+                    Ordering::Less
+                } else {
+                    Ordering::Greater
+                }
+            })
+            .unwrap_or(&mouse_pos);
+
+        if snap_pos.distance_sq(mouse_pos) > snap_radius * snap_radius {
+            snap_pos = mouse_pos;
+        }
+
+        snap_pos
+    }
+
     pub fn add_construction(&mut self, construction: Construction) {
         for other in self.constructions.iter() {
             self.intersections
@@ -102,8 +139,13 @@ impl Engine {
         self.constructions.push(construction);
     }
 
+    pub fn add_intersection(&mut self, point: Pos2) {
+        self.intersections.push(point);
+    }
+
     pub fn click(&mut self, point: PlotPoint) {
-        self.points.push(point.to_pos2());
+        self.points
+            .push(self.get_snap_pos(point.to_pos2(), self.config.snap_radius));
 
         if self.points.len() as u8 == self.current_tool.num_points() {
             let shape = self.current_tool.get_shape(&self.points);

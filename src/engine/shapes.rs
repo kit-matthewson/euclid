@@ -1,6 +1,9 @@
 use std::f32::consts::PI;
 
-use egui::{plot, Color32, Pos2};
+use egui::{
+    plot::{self, PlotUi},
+    Color32, Pos2,
+};
 
 use super::utils;
 
@@ -12,15 +15,21 @@ pub struct Construction {
 }
 
 impl Construction {
-    pub fn get_line(&self) -> plot::Line {
+    pub fn get_line(&self, ui: &PlotUi) -> plot::Line {
         match &self.shape {
             Shape::Circle(circle) => utils::circle(circle.pos, circle.r),
-            Shape::Line(line) => utils::line(line.p1, line.p2),
+            Shape::Line(line) => utils::line(
+                line.p1,
+                line.p2,
+                ui.plot_bounds().max()[1],
+                ui.plot_bounds().min()[1],
+            ),
             Shape::Segment(segment) => utils::segment(segment.p1, segment.p2),
             Shape::Arc(arc) => utils::arc(arc.pos, arc.r, arc.start, arc.stop),
         }
         .color(self.color)
         .width(self.width)
+        .name(&self.layer)
     }
 }
 

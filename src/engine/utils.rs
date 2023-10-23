@@ -17,16 +17,15 @@ pub fn circle(pos: Pos2, r: f32) -> plot::Line {
     Line::new(circle_points)
 }
 
-pub fn line(p1: Pos2, p2: Pos2) -> plot::Line {
+pub fn line(p1: Pos2, p2: Pos2, top: f64, bottom: f64) -> plot::Line {
     let m = (p2.y - p1.y) as f64 / (p2.x - p1.x) as f64;
     let c = p1.y as f64 - (m * p1.x as f64);
 
     if m.is_infinite() {
-        return Line::new(PlotPoints::from_parametric_callback(
-            move |t| (p1.x.into(), t),
-            0.0..=1.0,
-            512,
-        ));
+        return Line::new(PlotPoints::new(vec![
+            [p1.x as f64, top * 1.5],
+            [p1.x as f64, bottom * 1.5],
+        ]));
     }
 
     Line::new(PlotPoints::from_explicit_callback(
