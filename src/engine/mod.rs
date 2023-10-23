@@ -61,6 +61,17 @@ impl Engine {
             ui.line(construction.get_line());
         }
 
+        if let Some(mouse_pos) = ui.pointer_coordinate() {
+            if !self.points.is_empty() {
+                for line in self
+                    .current_tool
+                    .get_guides(&self.points, mouse_pos.to_pos2())
+                {
+                    ui.line(line);
+                }
+            }
+        }
+
         ui.points(
             Points::new(
                 self.points
