@@ -6,7 +6,7 @@ use super::utils;
 
 pub struct Construction {
     pub shape: Shape,
-    pub layer: usize,
+    pub layer: String,
     pub color: Color32,
     pub width: f32,
 }

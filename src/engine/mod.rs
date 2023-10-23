@@ -14,20 +14,20 @@ pub struct Engine {
     intersections: Vec<Pos2>,
     constructions: Vec<Construction>,
 
-    current_tool: &'static dyn tools::Tool,
-    current_layer: usize,
-    current_color: Color32,
-    current_width: f32,
+    pub current_tool: &'static dyn tools::Tool,
+    pub current_layer: String,
+    pub current_color: Color32,
+    pub current_width: f32,
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct EngineStats {
     #[serde(rename = "points")]
-    num_points: usize,
+    pub num_points: usize,
     #[serde(rename = "intersections")]
-    num_intersections: usize,
+    pub num_intersections: usize,
     #[serde(rename = "constructions")]
-    num_constructions: usize,
+    pub num_constructions: usize,
 }
 
 impl EngineStats {
@@ -48,7 +48,7 @@ impl Default for Engine {
             constructions: Vec::new(),
 
             current_tool: &tools::Compass,
-            current_layer: 0,
+            current_layer: String::from("Layer 1"),
             current_color: Color32::WHITE,
             current_width: 1.0,
         }
@@ -67,7 +67,7 @@ impl Engine {
                     .current_tool
                     .get_guides(&self.points, mouse_pos.to_pos2())
                 {
-                    ui.line(line);
+                    ui.line(line.color(self.current_color.gamma_multiply(0.5)));
                 }
             }
         }
@@ -110,7 +110,7 @@ impl Engine {
 
             let construction = Construction {
                 shape,
-                layer: self.current_layer,
+                layer: self.current_layer.to_owned(),
                 color: self.current_color,
                 width: self.current_width,
             };

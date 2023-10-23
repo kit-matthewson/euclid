@@ -1,5 +1,5 @@
 use egui::{plot, Pos2};
-use std::{f32::consts::PI, vec};
+use std::vec;
 
 use super::{shapes, utils};
 

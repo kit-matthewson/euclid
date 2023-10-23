@@ -1,16 +1,14 @@
 use eframe::App;
-use egui::{Color32, Pos2};
 
 use crate::{
-    engine::{
-        shapes::{CircleData, Construction, LineData, Shape},
-        Engine,
-    },
+    engine::{tools, Engine},
     ui,
 };
 
 pub struct Euclid {
     engine: Engine,
+
+    tools: Vec<&'static dyn tools::Tool>,
 }
 
 impl App for Euclid {
@@ -19,7 +17,7 @@ impl App for Euclid {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("file", |ui| {
                     if ui.button("new").clicked() {
-                        todo!();
+                        self.engine = Engine::default();
                     }
 
                     if ui.button("save").clicked() {
@@ -31,37 +29,72 @@ impl App for Euclid {
                     }
 
                     if ui.button("quit").clicked() {
-                        todo!();
+                        frame.close();
                     }
                 });
             });
         });
 
         egui::SidePanel::left("sidebar")
-            .resizable(false)
-            .min_width(250.0)
+            .min_width(100.0)
             .show(ctx, |ui| {
+                ui.add_space(20.0);
+                ui::grid::separator(ui);
+
                 ui::grid::new("side-grid").show(ui, |ui| {
+                    ui::grid::add_row(ui, "tool", |ui| {
+                        egui::ComboBox::from_id_source("tool-select")
+                            .selected_text(format!("{}", self.engine.current_tool.name()))
+                            .show_ui(ui, |ui| {
+                                for tool in &self.tools {
+                                    ui.selectable_value(
+                                        &mut self.engine.current_tool,
+                                        *tool,
+                                        tool.name(),
+                                    );
+                                }
+                            });
+                    });
+
+                    ui::grid::text_row(
+                        ui,
+                        "operation",
+                        self.engine
+                            .current_tool
+                            .instructions()
+                            .get(self.engine.stats().num_points)
+                            .unwrap_or(&""),
+                    );
+
+                    ui::grid::separator(ui);
+
+                    ui::grid::text_row(ui, "current layer", &self.engine.current_layer.to_string());
+                    ui::grid::text_row(ui, "current width", &self.engine.current_width.to_string());
+
+                    ui::grid::separator(ui);
+
                     if let Some(cpu_usage) = frame.info().cpu_usage {
-                        ui::grid::add_row(
+                        ui::grid::text_row(
                             ui,
                             "cpu time / ms",
                             &format!("{:.2}", cpu_usage * 1000.0),
                         );
                     }
 
-                    ui::grid::separator(ui);
-
-                    ui::grid::_add_struct(ui, self.engine.stats())
+                    ui::grid::add_struct(ui, self.engine.stats());
                 });
+
+                ui::grid::separator(ui);
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                egui::plot::Plot::new("graph")
+                egui::plot::Plot::new("plot")
                     .allow_double_click_reset(false)
                     .show_x(false)
                     .show_y(false)
+                    .x_axis_formatter(|_, _| String::new())
+                    .y_axis_formatter(|_, _| String::new())
                     .data_aspect(1.0)
                     .legend(egui::plot::Legend::default())
                     .set_margin_fraction(egui::vec2(0.2, 0.2))
@@ -89,34 +122,12 @@ impl Default for Euclid {
     fn default() -> Self {
         Self {
             engine: Engine::default(),
+            tools: vec![
+                &tools::Compass,
+                &tools::StraightEdge,
+                &tools::LineSegment,
+                &tools::Arc,
+            ],
         }
-    }
-}
-
-impl Euclid {
-    pub fn new_debug() -> Self {
-        let mut euclid = Euclid::default();
-
-        euclid.engine.add_construction(Construction {
-            shape: Shape::Circle(CircleData {
-                pos: Pos2::ZERO,
-                r: 1.0,
-            }),
-            layer: 0,
-            color: Color32::BLUE,
-            width: 1.0,
-        });
-
-        euclid.engine.add_construction(Construction {
-            shape: Shape::Line(LineData {
-                p1: Pos2::ZERO,
-                p2: Pos2::new(1.0, 1.0),
-            }),
-            layer: 0,
-            color: Color32::BLUE,
-            width: 1.0,
-        });
-
-        euclid
     }
 }
