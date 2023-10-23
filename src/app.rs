@@ -1,11 +1,8 @@
 use eframe::App;
-use egui::{plot::Legend, Color32, Pos2};
+use egui::{plot::Legend, Pos2};
 
 use crate::{
-    engine::{
-        shapes::{Construction, LineData},
-        tools, Engine,
-    },
+    engine::{tools, Engine},
     ui,
 };
 
