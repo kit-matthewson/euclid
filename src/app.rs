@@ -1,8 +1,11 @@
 use eframe::App;
-use egui::{plot::Legend, Pos2};
+use egui::{plot::Legend, Color32, Pos2};
 
 use crate::{
-    engine::{tools, Engine},
+    engine::{
+        shapes::{CircleData, Construction, Shape},
+        tools, Engine,
+    },
     ui,
 };
 
@@ -44,6 +47,12 @@ impl App for Euclid {
                 ui.add_space(20.0);
 
                 ui::grid::new("side-grid").show(ui, |ui| {
+                    ui::grid::add_text_row(
+                        ui,
+                        "cpu time / ms",
+                        &format!("{:.2},", frame.info().cpu_usage.unwrap_or(0.0) * 1000.0,),
+                    );
+
                     ui::grid::separator(ui);
 
                     ui::grid::add_row(ui, "tool", |ui| {
@@ -68,7 +77,7 @@ impl App for Euclid {
                         );
                     });
 
-                    ui::grid::text_row(
+                    ui::grid::add_text_row(
                         ui,
                         "operation",
                         self.engine
@@ -115,7 +124,17 @@ impl App for Euclid {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("add point").clicked() {
-                            self.engine.add_intersection(self.point_inp);
+                            self.engine.add_construction(Construction {
+                                shape: Shape::Circle(CircleData {
+                                    pos: self.point_inp,
+                                    r: 0.0,
+                                }),
+                                layer: String::new(),
+                                color: Color32::TRANSPARENT,
+                                width: 0.0,
+                                intersections: Vec::from([self.point_inp]),
+                            });
+
                             self.point_inp = Pos2::ZERO;
                         };
                     });

@@ -12,6 +12,7 @@ pub struct Construction {
     pub layer: String,
     pub color: Color32,
     pub width: f32,
+    pub intersections: Vec<Pos2>,
 }
 
 impl Construction {

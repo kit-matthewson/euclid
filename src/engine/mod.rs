@@ -16,7 +16,7 @@ pub struct Engine {
     pub config: EngineConfig,
 
     points: Vec<Pos2>,
-    intersections: Vec<Pos2>,
+    // intersections: Vec<Pos2>,
     constructions: Vec<Construction>,
 
     pub current_tool: &'static dyn tools::Tool,
@@ -29,8 +29,8 @@ pub struct Engine {
 pub struct EngineStats {
     #[serde(rename = "points")]
     pub num_points: usize,
-    #[serde(rename = "intersections")]
-    pub num_intersections: usize,
+    // #[serde(rename = "intersections")]
+    // pub num_intersections: usize,
     #[serde(rename = "constructions")]
     pub num_constructions: usize,
 }
@@ -39,7 +39,7 @@ impl EngineStats {
     pub fn from(engine: &Engine) -> EngineStats {
         EngineStats {
             num_points: engine.points.len(),
-            num_intersections: engine.intersections.len(),
+            // num_intersections: engine.intersections.len(),
             num_constructions: engine.constructions.len(),
         }
     }
@@ -50,7 +50,7 @@ impl Default for Engine {
         Engine {
             config: EngineConfig::default(),
             points: Vec::new(),
-            intersections: Vec::new(),
+            // intersections: Vec::new(),
             constructions: Vec::new(),
 
             current_tool: &tools::Compass,
@@ -65,6 +65,17 @@ impl Engine {
     pub fn show(&self, ui: &mut egui::plot::PlotUi) {
         for construction in &self.constructions {
             ui.line(construction.get_line(ui));
+            ui.points(
+                Points::new(
+                    construction
+                        .intersections
+                        .iter()
+                        .map(|point| [point.x as f64, point.y as f64])
+                        .collect::<Vec<[f64; 2]>>(),
+                )
+                .color(Color32::YELLOW)
+                .name(&construction.layer),
+            )
         }
 
         if let Some(mouse_pos) = ui.pointer_coordinate() {
@@ -98,21 +109,22 @@ impl Engine {
             .color(Color32::RED),
         );
 
-        ui.points(
-            Points::new(
-                self.intersections
-                    .iter()
-                    .map(|point| [point.x as f64, point.y as f64])
-                    .collect::<Vec<[f64; 2]>>(),
-            )
-            .color(Color32::YELLOW),
-        );
+        // ui.points(
+        //     Points::new(
+        //         self.intersections
+        //             .iter()
+        //             .map(|point| [point.x as f64, point.y as f64])
+        //             .collect::<Vec<[f64; 2]>>(),
+        //     )
+        //     .color(Color32::YELLOW),
+        // );
     }
 
     fn get_snap_pos(&self, mouse_pos: Pos2, snap_radius: f32) -> Pos2 {
-        let mut snap_pos = *self
-            .intersections
+        let mut snap_pos = self
+            .constructions
             .iter()
+            .flat_map(|con| con.intersections.clone())
             .min_by(|a, b| {
                 if a.distance_sq(mouse_pos) < b.distance_sq(mouse_pos) {
                     Ordering::Less
@@ -120,7 +132,7 @@ impl Engine {
                     Ordering::Greater
                 }
             })
-            .unwrap_or(&mouse_pos);
+            .unwrap_or(mouse_pos);
 
         if snap_pos.distance_sq(mouse_pos) > snap_radius * snap_radius {
             snap_pos = mouse_pos;
@@ -129,18 +141,19 @@ impl Engine {
         snap_pos
     }
 
-    pub fn add_construction(&mut self, construction: Construction) {
+    pub fn add_construction(&mut self, mut construction: Construction) {
         for other in self.constructions.iter() {
-            self.intersections
+            construction
+                .intersections
                 .append(&mut construction.shape.intersections(&other.shape));
         }
 
         self.constructions.push(construction);
     }
 
-    pub fn add_intersection(&mut self, point: Pos2) {
-        self.intersections.push(point);
-    }
+    // pub fn add_intersection(&mut self, point: Pos2) {
+    //     self.intersections.push(point);
+    // }
 
     pub fn click(&mut self, point: PlotPoint) {
         self.points
@@ -154,6 +167,7 @@ impl Engine {
                 layer: self.current_layer.to_owned(),
                 color: self.current_color.into(),
                 width: self.current_width,
+                intersections: Vec::new(),
             };
 
             self.add_construction(construction);
