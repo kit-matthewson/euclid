@@ -18,6 +18,7 @@ pub fn add_row<R>(ui: &mut egui::Ui, key: &str, add_contents: impl FnOnce(&mut e
     ui.end_row();
 }
 
+#[allow(dead_code)]
 pub fn add_struct<T: serde::Serialize>(ui: &mut egui::Ui, data_struct: T) {
     let values = serde_json::to_value(data_struct).unwrap();
 
