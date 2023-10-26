@@ -42,9 +42,10 @@ impl App for Euclid {
             .min_width(100.0)
             .show(ctx, |ui| {
                 ui.add_space(20.0);
-                ui::grid::separator(ui);
 
                 ui::grid::new("side-grid").show(ui, |ui| {
+                    ui::grid::separator(ui);
+
                     ui::grid::add_row(ui, "tool", |ui| {
                         egui::ComboBox::from_id_source("tool-select")
                             .selected_text(format!("{}", self.engine.current_tool.name()))
@@ -57,6 +58,14 @@ impl App for Euclid {
                                     );
                                 }
                             });
+                    });
+
+                    ui::grid::add_row(ui, "colour", |ui| {
+                        egui::color_picker::color_edit_button_rgba(
+                            ui,
+                            &mut self.engine.current_color,
+                            egui::color_picker::Alpha::OnlyBlend,
+                        );
                     });
 
                     ui::grid::text_row(
@@ -90,36 +99,22 @@ impl App for Euclid {
                         ui.add(egui::Slider::new(&mut self.engine.current_width, 0.5..=5.0));
                     });
 
+                    ui::grid::add_row(ui, "snap radius", |ui| {
+                        ui.add(egui::Slider::new(
+                            &mut self.engine.config.snap_radius,
+                            0.0..=1.0,
+                        ));
+                    });
+
                     ui::grid::separator(ui);
-
-                    if let Some(cpu_usage) = frame.info().cpu_usage {
-                        ui::grid::text_row(
-                            ui,
-                            "cpu time / ms",
-                            &format!("{:.2}", cpu_usage * 1000.0),
-                        );
-                    }
-
-                    ui::grid::add_struct(ui, self.engine.stats());
                 });
-
-                ui::grid::separator(ui);
-
-                ui::grid::add_row(ui, "snap radius", |ui| {
-                    ui.add(egui::Slider::new(
-                        &mut self.engine.config.snap_radius,
-                        0.0..=1.0,
-                    ));
-                });
-
-                ui::grid::separator(ui);
 
                 ui.horizontal(|ui| {
                     ui.add(egui::DragValue::new(&mut self.point_inp.x));
                     ui.add(egui::DragValue::new(&mut self.point_inp.y));
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("add").clicked() {
+                        if ui.button("add point").clicked() {
                             self.engine.add_intersection(self.point_inp);
                             self.point_inp = Pos2::ZERO;
                         };

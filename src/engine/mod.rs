@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 
 use egui::{
     plot::{PlotPoint, Points},
-    Color32, Pos2,
+    Color32, Pos2, Rgba,
 };
 
 use self::{config::EngineConfig, shapes::Construction};
@@ -21,7 +21,7 @@ pub struct Engine {
 
     pub current_tool: &'static dyn tools::Tool,
     pub current_layer: String,
-    pub current_color: Color32,
+    pub current_color: Rgba,
     pub current_width: f32,
 }
 
@@ -55,7 +55,7 @@ impl Default for Engine {
 
             current_tool: &tools::Compass,
             current_layer: String::from("Layer 1"),
-            current_color: Color32::WHITE,
+            current_color: Rgba::WHITE,
             current_width: 1.0,
         }
     }
@@ -74,15 +74,14 @@ impl Engine {
 
             if snap_pos != mouse_pos {
                 ui.line(
-                    utils::segment(mouse_pos, snap_pos)
-                        .color(self.current_color.gamma_multiply(0.5)),
+                    utils::segment(mouse_pos, snap_pos).color(self.current_color.multiply(0.5)),
                 );
             }
 
             if !self.points.is_empty() {
                 for line in self.current_tool.get_guides(&self.points, snap_pos, &ui) {
                     ui.line(
-                        line.color(self.current_color.gamma_multiply(0.5))
+                        line.color(self.current_color.multiply(0.5))
                             .width(self.current_width),
                     );
                 }
@@ -153,7 +152,7 @@ impl Engine {
             let construction = Construction {
                 shape,
                 layer: self.current_layer.to_owned(),
-                color: self.current_color,
+                color: self.current_color.into(),
                 width: self.current_width,
             };
 
