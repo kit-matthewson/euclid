@@ -16,7 +16,6 @@ pub struct Engine {
     pub config: EngineConfig,
 
     points: Vec<Pos2>,
-    // intersections: Vec<Pos2>,
     constructions: Vec<Construction>,
 
     pub current_tool: &'static dyn tools::Tool,
@@ -29,8 +28,6 @@ pub struct Engine {
 pub struct EngineStats {
     #[serde(rename = "points")]
     pub num_points: usize,
-    // #[serde(rename = "intersections")]
-    // pub num_intersections: usize,
     #[serde(rename = "constructions")]
     pub num_constructions: usize,
 }
@@ -39,7 +36,6 @@ impl EngineStats {
     pub fn from(engine: &Engine) -> EngineStats {
         EngineStats {
             num_points: engine.points.len(),
-            // num_intersections: engine.intersections.len(),
             num_constructions: engine.constructions.len(),
         }
     }
@@ -50,7 +46,6 @@ impl Default for Engine {
         Engine {
             config: EngineConfig::default(),
             points: Vec::new(),
-            // intersections: Vec::new(),
             constructions: Vec::new(),
 
             current_tool: &tools::Compass,
@@ -108,16 +103,6 @@ impl Engine {
             )
             .color(Color32::RED),
         );
-
-        // ui.points(
-        //     Points::new(
-        //         self.intersections
-        //             .iter()
-        //             .map(|point| [point.x as f64, point.y as f64])
-        //             .collect::<Vec<[f64; 2]>>(),
-        //     )
-        //     .color(Color32::YELLOW),
-        // );
     }
 
     fn get_snap_pos(&self, mouse_pos: Pos2, snap_radius: f32) -> Pos2 {
@@ -150,10 +135,6 @@ impl Engine {
 
         self.constructions.push(construction);
     }
-
-    // pub fn add_intersection(&mut self, point: Pos2) {
-    //     self.intersections.push(point);
-    // }
 
     pub fn click(&mut self, point: PlotPoint) {
         self.points
