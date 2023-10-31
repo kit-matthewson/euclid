@@ -50,7 +50,7 @@ impl App for Euclid {
                     ui::grid::add_text_row(
                         ui,
                         "cpu time / ms",
-                        &format!("{:.2},", frame.info().cpu_usage.unwrap_or(0.0) * 1000.0,),
+                        &format!("{:.2}", frame.info().cpu_usage.unwrap_or(0.0) * 1000.0),
                     );
 
                     ui::grid::separator(ui);
