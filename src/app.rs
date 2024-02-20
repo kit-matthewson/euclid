@@ -53,6 +53,18 @@ impl App for Euclid {
                         &format!("{:.2}", frame.info().cpu_usage.unwrap_or(0.0) * 1000.0),
                     );
 
+                    ui::grid::add_text_row(
+                        ui,
+                        "constructions",
+                        &self.engine.stats().num_constructions.to_string(),
+                    );
+
+                    ui::grid::add_text_row(
+                        ui,
+                        "intersections",
+                        &self.engine.stats().num_intersections.to_string(),
+                    );
+
                     ui::grid::separator(ui);
 
                     ui::grid::add_row(ui, "tool", |ui| {
@@ -83,7 +95,7 @@ impl App for Euclid {
                         self.engine
                             .current_tool
                             .instructions()
-                            .get(self.engine.stats().num_points)
+                            .get(self.engine.stats().num_intersections)
                             .unwrap_or(&""),
                     );
 
