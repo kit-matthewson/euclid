@@ -3,10 +3,8 @@ pub mod shapes;
 pub mod tools;
 pub mod utils;
 
-use std::cmp::Ordering;
-
 use egui::{
-    plot::{PlotPoint, Points},
+    plot::{LineStyle, PlotPoint, Points},
     Color32, Pos2, Rgba,
 };
 
@@ -24,18 +22,21 @@ pub struct Engine {
     pub current_width: f32,
 }
 
-#[derive(Debug, Clone, Copy, serde::Serialize)]
+#[derive(Debug, Clone, Copy)]
 pub struct EngineStats {
-    #[serde(rename = "points")]
-    pub num_points: usize,
-    #[serde(rename = "constructions")]
+    pub num_intersections: usize,
     pub num_constructions: usize,
 }
 
 impl EngineStats {
     pub fn from(engine: &Engine) -> EngineStats {
         EngineStats {
-            num_points: engine.points.len(),
+            num_intersections: engine
+                .constructions
+                .iter()
+                .map(|con| con.intersections.len())
+                .sum(),
+
             num_constructions: engine.constructions.len(),
         }
     }
@@ -60,6 +61,7 @@ impl Engine {
     pub fn show(&self, ui: &mut egui::plot::PlotUi) {
         for construction in &self.constructions {
             ui.line(construction.get_line(ui));
+
             ui.points(
                 Points::new(
                     construction
@@ -75,19 +77,26 @@ impl Engine {
 
         if let Some(mouse_pos) = ui.pointer_coordinate() {
             let mouse_pos = mouse_pos.to_pos2();
-
             let snap_pos = self.get_snap_pos(mouse_pos, self.config.snap_radius);
 
             if snap_pos != mouse_pos {
                 ui.line(
-                    utils::segment(mouse_pos, snap_pos).color(self.current_color.multiply(0.5)),
+                    utils::segment(mouse_pos, snap_pos)
+                        .color(self.current_color.multiply(0.07))
+                        .style(LineStyle::dotted_loose()),
+                );
+            } else if self.points.len() == 0 {
+                ui.line(
+                    utils::circle(mouse_pos, self.config.snap_radius)
+                        .color(self.current_color.multiply(0.07))
+                        .style(LineStyle::dotted_loose()),
                 );
             }
 
             if !self.points.is_empty() {
                 for line in self.current_tool.get_guides(&self.points, snap_pos, &ui) {
                     ui.line(
-                        line.color(self.current_color.multiply(0.5))
+                        line.color(self.current_color.multiply(0.3))
                             .width(self.current_width),
                     );
                 }
@@ -107,16 +116,7 @@ impl Engine {
 
     fn get_snap_pos(&self, mouse_pos: Pos2, snap_radius: f32) -> Pos2 {
         let mut snap_pos = self
-            .constructions
-            .iter()
-            .flat_map(|con| con.intersections.clone())
-            .min_by(|a, b| {
-                if a.distance_sq(mouse_pos) < b.distance_sq(mouse_pos) {
-                    Ordering::Less
-                } else {
-                    Ordering::Greater
-                }
-            })
+            .closest_intersection(mouse_pos, &self.points)
             .unwrap_or(mouse_pos);
 
         if snap_pos.distance_sq(mouse_pos) > snap_radius * snap_radius {
@@ -124,6 +124,28 @@ impl Engine {
         }
 
         snap_pos
+    }
+
+    pub fn closest_intersection(&self, mouse_pos: Pos2, ignore: &Vec<Pos2>) -> Option<Pos2> {
+        let mut closest: Option<Pos2> = None;
+
+        for construction in &self.constructions {
+            for intersection in construction
+                .intersections
+                .iter()
+                .filter(|i| !ignore.contains(i))
+            {
+                if let Some(c) = closest {
+                    if intersection.distance_sq(mouse_pos) < c.distance_sq(mouse_pos) {
+                        closest = Some(*intersection);
+                    }
+                } else {
+                    closest = Some(*intersection);
+                }
+            }
+        }
+
+        closest
     }
 
     pub fn add_construction(&mut self, mut construction: Construction) {
