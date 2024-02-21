@@ -66,6 +66,10 @@ impl Default for Engine {
 
 impl Engine {
     pub fn show(&self, ui: &mut egui::plot::PlotUi) {
+        if self.points.is_empty() && self.constructions.is_empty() {
+            return;
+        }
+
         for construction in &self.constructions {
             ui.line(construction.get_line(ui));
 
