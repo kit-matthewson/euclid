@@ -15,6 +15,7 @@ pub struct Euclid {
     tools: Vec<&'static dyn tools::Tool>,
 
     point_inp: Pos2,
+    show_axes: bool,
 }
 
 impl App for Euclid {
@@ -42,7 +43,7 @@ impl App for Euclid {
         });
 
         egui::SidePanel::left("sidebar")
-            .min_width(100.0)
+            .min_width(200.0)
             .show(ctx, |ui| {
                 ui.add_space(20.0);
 
@@ -53,17 +54,7 @@ impl App for Euclid {
                         &format!("{:.2}", frame.info().cpu_usage.unwrap_or(0.0) * 1000.0),
                     );
 
-                    ui::grid::add_text_row(
-                        ui,
-                        "constructions",
-                        &self.engine.stats().num_constructions.to_string(),
-                    );
-
-                    ui::grid::add_text_row(
-                        ui,
-                        "intersections",
-                        &self.engine.stats().num_intersections.to_string(),
-                    );
+                    ui::grid::add_struct(ui, self.engine.stats());
 
                     ui::grid::separator(ui);
 
@@ -95,8 +86,8 @@ impl App for Euclid {
                         self.engine
                             .current_tool
                             .instructions()
-                            .get(self.engine.stats().num_intersections)
-                            .unwrap_or(&""),
+                            .get(self.engine.stats().num_points)
+                            .unwrap_or(&"none"),
                     );
 
                     ui::grid::separator(ui);
@@ -127,14 +118,17 @@ impl App for Euclid {
                         ));
                     });
 
+                    ui::grid::add_row(ui, "show axes", |ui| {
+                        ui.add(egui::Checkbox::new(&mut self.show_axes, ""));
+                    });
+
                     ui::grid::separator(ui);
-                });
 
-                ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut self.point_inp.x));
-                    ui.add(egui::DragValue::new(&mut self.point_inp.y));
+                    ui.horizontal(|ui| {
+                        ui.add(egui::DragValue::new(&mut self.point_inp.x));
+                        ui.add(egui::DragValue::new(&mut self.point_inp.y));
 
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("add point").clicked() {
                             self.engine.add_construction(Construction {
                                 shape: Shape::Circle(CircleData {
@@ -148,8 +142,10 @@ impl App for Euclid {
                             });
 
                             self.point_inp = Pos2::ZERO;
-                        };
-                    });
+                        }});
+
+                        ui.end_row();
+                    })
                 });
             });
 
@@ -163,6 +159,7 @@ impl App for Euclid {
                     .data_aspect(1.0)
                     .legend(egui::plot::Legend::default())
                     .set_margin_fraction(egui::vec2(0.2, 0.2))
+                    .show_axes([self.show_axes; 2])
                     .show(ui, |ui| {
                         if ui.plot_clicked()
                             && ui.pointer_coordinate_drag_delta().length_sq() == 0.0
@@ -175,7 +172,7 @@ impl App for Euclid {
                         if ui.plot_secondary_clicked() {
                             self.engine.clear_points();
                         }
-
+                        
                         self.engine.show(ui);
                     });
             });
@@ -188,6 +185,7 @@ impl Default for Euclid {
         Self {
             engine: Engine::default(),
             point_inp: Pos2::ZERO,
+            show_axes: true,
 
             tools: vec![
                 &tools::Compass,

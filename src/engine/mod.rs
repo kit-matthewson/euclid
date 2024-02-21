@@ -7,6 +7,7 @@ use egui::{
     plot::{LineStyle, PlotPoint, Points},
     Color32, Pos2, Rgba,
 };
+use serde::Serialize;
 
 use self::{config::EngineConfig, shapes::Construction};
 
@@ -22,9 +23,13 @@ pub struct Engine {
     pub current_width: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct EngineStats {
+    #[serde(rename = "intersections")]
     pub num_intersections: usize,
+    #[serde(rename = "points")]
+    pub num_points: usize,
+    #[serde(rename = "constructions")]
     pub num_constructions: usize,
 }
 
@@ -36,6 +41,8 @@ impl EngineStats {
                 .iter()
                 .map(|con| con.intersections.len())
                 .sum(),
+
+            num_points: engine.points.len(),
 
             num_constructions: engine.constructions.len(),
         }
