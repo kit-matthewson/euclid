@@ -1,5 +1,5 @@
 use eframe::App;
-use egui::{plot::Legend, Color32, Pos2};
+use egui::{plot::Legend, Color32, Pos2, RichText};
 
 use crate::{
     engine::{
@@ -20,11 +20,19 @@ pub struct Euclid {
 
 impl App for Euclid {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        ctx.set_visuals(egui::Visuals {
+            dark_mode: true,
+            extreme_bg_color: self.engine.config.extreme_background_color.into(),
+            faint_bg_color: self.engine.config.faint_background_color.into(),
+            override_text_color: Some(self.engine.config.text_color.into()),
+            ..Default::default()
+        });
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("file", |ui| {
                     if ui.button("new").clicked() {
-                        self.engine = Engine::default();
+                        self.engine.clear();
                     }
 
                     if ui.button("save").clicked() {
@@ -37,6 +45,20 @@ impl App for Euclid {
 
                     if ui.button("quit").clicked() {
                         frame.close();
+                    }
+                });
+
+                ui.menu_button("examples", |ui| {
+                    if ui.button("triangle").clicked() {
+                        todo!()
+                    }
+
+                    if ui.button("pentagon").clicked() {
+                        todo!()
+                    }
+
+                    if ui.button("hexagon").clicked() {
+                        todo!()
                     }
                 });
             });
@@ -73,7 +95,28 @@ impl App for Euclid {
                     });
 
                     ui::grid::add_row(ui, "colour", |ui| {
-                        egui::color_picker::color_edit_button_rgba(
+                        egui::ComboBox::from_id_source("color-select")
+                            .selected_text(format!(
+                                "{}",
+                                self.engine
+                                    .config
+                                    .get_name(&self.engine.current_color)
+                                    .unwrap_or("custom".to_owned())
+                            ))
+                            .show_ui(ui, |ui| {
+                                for color in &self.engine.config.tool_colors {
+                                    ui.selectable_value(
+                                        &mut self.engine.current_color,
+                                        *color,
+                                        format!(
+                                            "{:?}",
+                                            self.engine.config.get_name(color).unwrap()
+                                        ),
+                                    );
+                                }
+                            });
+
+                        egui::color_picker::color_edit_button_srgba(
                             ui,
                             &mut self.engine.current_color,
                             egui::color_picker::Alpha::OnlyBlend,
@@ -112,14 +155,15 @@ impl App for Euclid {
                     });
 
                     ui::grid::add_row(ui, "snap radius", |ui| {
-                        ui.add(egui::Slider::new(
-                            &mut self.engine.config.snap_radius,
-                            0.0..=1.0,
-                        ));
+                        ui.add(egui::Slider::new(&mut self.engine.snap_radius, 0.0..=1.0));
                     });
 
                     ui::grid::add_row(ui, "show axes", |ui| {
                         ui.add(egui::Checkbox::new(&mut self.show_axes, ""));
+                    });
+
+                    ui::grid::add_row(ui, "show intersections", |ui| {
+                        ui.add(egui::Checkbox::new(&mut self.engine.show_intersections, ""));
                     });
 
                     ui::grid::separator(ui);
@@ -129,27 +173,71 @@ impl App for Euclid {
                         ui.add(egui::DragValue::new(&mut self.point_inp.y));
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("add point").clicked() {
-                            self.engine.add_construction(Construction {
-                                shape: Shape::Circle(CircleData {
-                                    pos: self.point_inp,
-                                    r: 0.0,
-                                }),
-                                layer: String::new(),
-                                color: Color32::TRANSPARENT,
-                                width: 0.0,
-                                intersections: Vec::from([self.point_inp]),
-                            });
+                            if ui.button("add point").clicked() {
+                                self.engine.add_construction(Construction {
+                                    shape: Shape::Circle(CircleData {
+                                        pos: self.point_inp,
+                                        r: 0.001,
+                                    }),
+                                    layer: String::new(),
+                                    color: Color32::TRANSPARENT,
+                                    width: 0.0,
+                                    intersections: Vec::from([self.point_inp]),
+                                });
 
-                            self.point_inp = Pos2::ZERO;
-                        }});
+                                self.point_inp = Pos2::ZERO;
+                            }
+                        });
+                    });
 
-                        ui.end_row();
-                    })
+                    ui.end_row();
+
+                    ui::grid::separator(ui);
                 });
+
+                ui.horizontal(|ui| {
+                    ui.add_enabled_ui(self.engine.can_undo(), |ui| {
+                        if ui.button("undo").clicked() {
+                            self.engine.undo();
+                        };
+                    });
+
+                    ui.add_enabled_ui(self.engine.can_redo(), |ui| {
+                        if ui.button("redo").clicked() {
+                            self.engine.redo();
+                        };
+                    });
+
+                    if ui.button("clear").clicked() {
+                        self.engine.clear();
+                    };
+                });
+
+                ui::grid::separator(ui);
+
+                let num = 5;
+                for (i, construction) in
+                    self.engine.constructions.iter().rev().take(num).enumerate()
+                {
+                    let text = RichText::new(format!("{}", construction))
+                        .color(
+                            self.engine
+                                .config
+                                .text_color
+                                .gamma_multiply(1.0 - (i as f32 / num as f32)),
+                        )
+                        .font(egui::FontId::monospace(12.0));
+
+                    ui.label(text);
+                    ui.end_row();
+                }
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            ui.visuals_mut().widgets.open.fg_stroke.color = self.engine.config.grid_color.into();
+            ui.visuals_mut().widgets.open.weak_bg_fill = self.engine.config.background_color.into();
+            ui.visuals_mut().faint_bg_color = self.engine.config.point_color.into();
+
             ui.vertical_centered(|ui| {
                 egui::plot::Plot::new("plot")
                     .allow_double_click_reset(false)
@@ -172,7 +260,7 @@ impl App for Euclid {
                         if ui.plot_secondary_clicked() {
                             self.engine.clear_points();
                         }
-                        
+
                         self.engine.show(ui);
                     });
             });
@@ -180,10 +268,10 @@ impl App for Euclid {
     }
 }
 
-impl Default for Euclid {
-    fn default() -> Self {
+impl Euclid {
+    pub fn new() -> Self {
         Self {
-            engine: Engine::default(),
+            engine: Engine::new("config.yml"),
             point_inp: Pos2::ZERO,
             show_axes: true,
 
@@ -194,11 +282,5 @@ impl Default for Euclid {
                 &tools::Arc,
             ],
         }
-    }
-}
-
-impl Euclid {
-    pub fn new() -> Self {
-        Euclid::default()
     }
 }

@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, fmt};
 
 use egui::{
     plot::{self, PlotUi},
@@ -7,6 +7,7 @@ use egui::{
 
 use super::utils;
 
+#[derive(Debug, Clone)]
 pub struct Construction {
     pub shape: Shape,
     pub layer: String,
@@ -34,6 +35,13 @@ impl Construction {
     }
 }
 
+impl fmt::Display for Construction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.shape)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Shape {
     Circle(CircleData),
     Line(LineData),
@@ -41,21 +49,52 @@ pub enum Shape {
     Arc(ArcData),
 }
 
+impl fmt::Display for Shape {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Shape::Circle(data) => write!(
+                f,
+                "Circle: p=({:.2}, {:.2}), r={:.3})",
+                data.pos.x, data.pos.y, data.r
+            ),
+            Shape::Line(data) => write!(
+                f,
+                "Line: p1=({:.2}, {:.2}), p2=({:.2}, {:.2})",
+                data.p1.x, data.p1.y, data.p2.x, data.p2.y
+            ),
+            Shape::Segment(data) => write!(
+                f,
+                "Segment: p1=({:.2}, {:.2}), p2=({:.2}, {:.2})",
+                data.p1.x, data.p1.y, data.p2.x, data.p2.y
+            ),
+            Shape::Arc(data) => write!(
+                f,
+                "Arc: p=({:.2}, {:.2}), r={:.3}, start={:.2}, stop={:.2}",
+                data.pos.x, data.pos.y, data.r, data.start, data.stop
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CircleData {
     pub pos: Pos2,
     pub r: f32,
 }
 
+#[derive(Debug, Clone)]
 pub struct LineData {
     pub p1: Pos2,
     pub p2: Pos2,
 }
 
+#[derive(Debug, Clone)]
 pub struct SegmentData {
     pub p1: Pos2,
     pub p2: Pos2,
 }
 
+#[derive(Debug, Clone)]
 pub struct ArcData {
     pub pos: Pos2,
     pub r: f32,
