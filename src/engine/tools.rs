@@ -44,7 +44,7 @@ impl Tool for Compass {
 
     fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Circle(shapes::CircleData {
-            pos: points[0],
+            pos: points[0].into(),
             r: points[0].distance(points[1]),
         })
     }
@@ -74,8 +74,8 @@ impl Tool for StraightEdge {
 
     fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Line(shapes::LineData {
-            p1: points[0],
-            p2: points[1],
+            p1: points[0].into(),
+            p2: points[1].into(),
         })
     }
 }
@@ -99,8 +99,8 @@ impl Tool for LineSegment {
 
     fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Segment(shapes::SegmentData {
-            p1: points[0],
-            p2: points[1],
+            p1: points[0].into(),
+            p2: points[1].into(),
         })
     }
 }
@@ -168,7 +168,7 @@ impl Tool for Arc {
 
     fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Arc(shapes::ArcData {
-            pos: points[0],
+            pos: points[0].into(),
             r: points[0].distance(points[1]),
             start: utils::arc_angle(points[2], points[0]),
             stop: utils::arc_angle(points[3], points[0]),

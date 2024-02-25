@@ -1,6 +1,7 @@
 mod app;
 mod engine;
 mod ui;
+mod de;
 
 fn main() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {

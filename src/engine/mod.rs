@@ -169,14 +169,14 @@ impl Engine {
             for intersection in construction
                 .intersections
                 .iter()
-                .filter(|i| !ignore.contains(i))
+                .filter(|i| !ignore.contains(&i.to_pos2()))
             {
                 if let Some(c) = closest {
-                    if intersection.distance_sq(mouse_pos) < c.distance_sq(mouse_pos) {
-                        closest = Some(*intersection);
+                    if intersection.to_pos2().distance_sq(mouse_pos) < c.distance_sq(mouse_pos) {
+                        closest = Some(intersection.to_pos2());
                     }
                 } else {
-                    closest = Some(*intersection);
+                    closest = Some(intersection.to_pos2());
                 }
             }
         }
@@ -204,7 +204,7 @@ impl Engine {
             let construction = Construction {
                 shape,
                 layer: self.current_layer.to_owned(),
-                color: self.current_color,
+                color: self.current_color.into(),
                 width: self.current_width,
                 intersections: Vec::new(),
             };
@@ -249,5 +249,18 @@ impl Engine {
 
     pub fn stats(&self) -> EngineStats {
         EngineStats::from(self)
+    }
+
+    #[allow(dead_code)]
+    pub fn load(&mut self, data: &str) -> Result<(), serde_yaml::Error> {
+        self.clear();
+        self.constructions = serde_yaml::from_str::<Vec<Construction>>(data)?;
+
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    pub fn save(&self) -> String {
+        todo!();
     }
 }
