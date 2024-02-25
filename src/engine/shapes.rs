@@ -1,35 +1,47 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, fmt};
 
-use crate::utils;
+use egui::{
+    plot::{self, PlotUi},
+    Color32, Pos2,
+};
 
-use macroquad::prelude::*;
+use super::utils;
 
+#[derive(Debug, Clone)]
 pub struct Construction {
     pub shape: Shape,
-    pub layer: usize,
-    pub color: Color,
+    pub layer: String,
+    pub color: Color32,
+    pub width: f32,
+    pub intersections: Vec<Pos2>,
 }
 
 impl Construction {
-    pub fn draw(&self, thickness: f32) {
+    pub fn get_line(&self, ui: &PlotUi) -> plot::Line {
         match &self.shape {
-            Shape::Circle(circle) => {
-                utils::draw_circle(circle.pos, circle.r, self.color, thickness)
-            }
-
-            Shape::Line(line) => utils::draw_line(line.p1, line.p2, self.color, thickness),
-
-            Shape::Segment(segment) => {
-                utils::draw_segment(segment.p1, segment.p2, self.color, thickness)
-            }
-
-            Shape::Arc(arc) => {
-                utils::draw_arc(arc.pos, arc.r, arc.start, arc.stop, self.color, thickness)
-            }
+            Shape::Circle(circle) => utils::circle(circle.pos, circle.r),
+            Shape::Line(line) => utils::line(
+                line.p1,
+                line.p2,
+                ui.plot_bounds().max()[1],
+                ui.plot_bounds().min()[1],
+            ),
+            Shape::Segment(segment) => utils::segment(segment.p1, segment.p2),
+            Shape::Arc(arc) => utils::arc(arc.pos, arc.r, arc.start, arc.stop),
         }
+        .color(self.color)
+        .width(self.width)
+        .name(&self.layer)
     }
 }
 
+impl fmt::Display for Construction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.shape)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Shape {
     Circle(CircleData),
     Line(LineData),
@@ -37,23 +49,54 @@ pub enum Shape {
     Arc(ArcData),
 }
 
+impl fmt::Display for Shape {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Shape::Circle(data) => write!(
+                f,
+                "Circle: p=({:.2}, {:.2}), r={:.3})",
+                data.pos.x, data.pos.y, data.r
+            ),
+            Shape::Line(data) => write!(
+                f,
+                "Line: p1=({:.2}, {:.2}), p2=({:.2}, {:.2})",
+                data.p1.x, data.p1.y, data.p2.x, data.p2.y
+            ),
+            Shape::Segment(data) => write!(
+                f,
+                "Segment: p1=({:.2}, {:.2}), p2=({:.2}, {:.2})",
+                data.p1.x, data.p1.y, data.p2.x, data.p2.y
+            ),
+            Shape::Arc(data) => write!(
+                f,
+                "Arc: p=({:.2}, {:.2}), r={:.3}, start={:.2}, stop={:.2}",
+                data.pos.x, data.pos.y, data.r, data.start, data.stop
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CircleData {
-    pub pos: Vec2,
+    pub pos: Pos2,
     pub r: f32,
 }
 
+#[derive(Debug, Clone)]
 pub struct LineData {
-    pub p1: Vec2,
-    pub p2: Vec2,
+    pub p1: Pos2,
+    pub p2: Pos2,
 }
 
+#[derive(Debug, Clone)]
 pub struct SegmentData {
-    pub p1: Vec2,
-    pub p2: Vec2,
+    pub p1: Pos2,
+    pub p2: Pos2,
 }
 
+#[derive(Debug, Clone)]
 pub struct ArcData {
-    pub pos: Vec2,
+    pub pos: Pos2,
     pub r: f32,
     pub start: f32,
     pub stop: f32,
@@ -67,7 +110,7 @@ impl SegmentData {
         }
     }
 
-    pub fn valid_points(&self, points: Vec<Vec2>) -> Vec<Vec2> {
+    pub fn valid_points(&self, points: Vec<Pos2>) -> Vec<Pos2> {
         let mut valid = Vec::new();
 
         for point in points {
@@ -90,7 +133,7 @@ impl ArcData {
         }
     }
 
-    pub fn valid_points(&self, points: Vec<Vec2>) -> Vec<Vec2> {
+    pub fn valid_points(&self, points: Vec<Pos2>) -> Vec<Pos2> {
         let mut valid = Vec::new();
 
         for point in points {
@@ -114,7 +157,7 @@ impl ArcData {
 }
 
 impl Shape {
-    pub fn intersections(&self, other: &Shape) -> Vec<Vec2> {
+    pub fn intersections(&self, other: &Shape) -> Vec<Pos2> {
         match self {
             Shape::Circle(a) => match other {
                 Shape::Circle(b) => Shape::circle_circle(a, b),
@@ -146,8 +189,8 @@ impl Shape {
         }
     }
 
-    fn circle_circle(a: &CircleData, b: &CircleData) -> Vec<Vec2> {
-        if a.pos.distance_squared(b.pos) > f32::powi(a.r + b.r, 2) {
+    fn circle_circle(a: &CircleData, b: &CircleData) -> Vec<Pos2> {
+        if Pos2::distance_sq(a.pos, b.pos) > f32::powi(a.r + b.r, 2) {
             return Vec::new();
         } else {
             let m = (a.pos.x - b.pos.x) / (b.pos.y - a.pos.y);
@@ -164,7 +207,7 @@ impl Shape {
                 let y1 = (-pb + d) / 2.0;
                 let y2 = (-pb - d) / 2.0;
 
-                return vec![Vec2::new(x, y1), Vec2::new(x, y2)];
+                return vec![Pos2::new(x, y1), Pos2::new(x, y2)];
             }
 
             let c = ((a.pos.x * a.pos.x) + (a.pos.y * a.pos.y)
@@ -177,14 +220,14 @@ impl Shape {
             return Shape::circle_line(
                 a,
                 &LineData {
-                    p1: Vec2::new(0.0, c),
-                    p2: Vec2::new(1.0, m + c),
+                    p1: Pos2::new(0.0, c),
+                    p2: Pos2::new(1.0, m + c),
                 },
             );
         }
     }
 
-    fn circle_line(a: &CircleData, b: &LineData) -> Vec<Vec2> {
+    fn circle_line(a: &CircleData, b: &LineData) -> Vec<Pos2> {
         let m = (b.p1.y - b.p2.y) / (b.p1.x - b.p2.x);
         let c = -m * b.p1.x + b.p1.y;
 
@@ -199,7 +242,7 @@ impl Shape {
             let y1 = (pb + d) / 2.0;
             let y2 = (pb - d) / 2.0;
 
-            return vec![Vec2::new(x, y1), Vec2::new(x, y2)];
+            return vec![Pos2::new(x, y1), Pos2::new(x, y2)];
         }
 
         let d = ((m * m + 1.0) * (a.r * a.r)) - f32::powi(a.pos.x * m - a.pos.y + c, 2);
@@ -214,23 +257,23 @@ impl Shape {
             let y1 = m * x1 + c;
             let y2 = m * x2 + c;
 
-            return vec![Vec2::new(x1, y1), Vec2::new(x2, y2)];
+            return vec![Pos2::new(x1, y1), Pos2::new(x2, y2)];
         } else {
             return Vec::new();
         }
     }
 
-    fn circle_segment(a: &CircleData, b: &SegmentData) -> Vec<Vec2> {
+    fn circle_segment(a: &CircleData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::circle_line(a, &b.line());
         return b.valid_points(possible);
     }
 
-    fn circle_arc(a: &CircleData, b: &ArcData) -> Vec<Vec2> {
+    fn circle_arc(a: &CircleData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_circle(a, &b.circle());
         return b.valid_points(possible);
     }
 
-    fn line_line(a: &LineData, b: &LineData) -> Vec<Vec2> {
+    fn line_line(a: &LineData, b: &LineData) -> Vec<Pos2> {
         let m1 = (a.p1.y - a.p2.y) / (a.p1.x - a.p2.x);
         let m2 = (b.p1.y - b.p2.y) / (b.p1.x - b.p2.x);
 
@@ -242,7 +285,7 @@ impl Shape {
             let x = a.p1.x;
             let y = (m2 * x) - (m2 * b.p1.x) + b.p1.y;
 
-            return vec![Vec2::new(x, y)];
+            return vec![Pos2::new(x, y)];
         }
 
         if m2.is_infinite() {
@@ -252,30 +295,30 @@ impl Shape {
         let x = (b.p1.y - a.p1.y - (m2 * b.p1.x) + (m1 * a.p1.x)) / (m1 - m2);
         let y = m1 * (x - a.p1.x) + a.p1.y;
 
-        return vec![Vec2::new(x, y)];
+        return vec![Pos2::new(x, y)];
     }
 
-    fn line_segment(a: &LineData, b: &SegmentData) -> Vec<Vec2> {
+    fn line_segment(a: &LineData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::line_line(a, &b.line());
         return b.valid_points(possible);
     }
 
-    fn line_arc(a: &LineData, b: &ArcData) -> Vec<Vec2> {
+    fn line_arc(a: &LineData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_line(&b.circle(), a);
         return b.valid_points(possible);
     }
 
-    fn segment_segment(a: &SegmentData, b: &SegmentData) -> Vec<Vec2> {
+    fn segment_segment(a: &SegmentData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::line_segment(&a.line(), b);
         return a.valid_points(possible);
     }
 
-    fn segment_arc(a: &SegmentData, b: &ArcData) -> Vec<Vec2> {
+    fn segment_arc(a: &SegmentData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::line_arc(&a.line(), b);
         return a.valid_points(possible);
     }
 
-    fn arc_arc(a: &ArcData, b: &ArcData) -> Vec<Vec2> {
+    fn arc_arc(a: &ArcData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_arc(&a.circle(), b);
         return a.valid_points(possible);
     }

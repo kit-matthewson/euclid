@@ -1,5 +1,4 @@
-# IDE
-.fleet
 .vscode
+.fleet
 
 /target
