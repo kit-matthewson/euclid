@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use eframe::App;
 use egui::{
     plot::{Legend, PlotPoint},
@@ -36,7 +38,11 @@ impl App for Euclid {
                     }
 
                     if ui.button("save").clicked() {
-                        todo!();
+                        let raw_str = self.engine.save().expect("could not save file");
+
+                        std::fs::create_dir_all("saves").unwrap();
+                        let mut file = std::fs::File::create("saves/save.yml").unwrap();
+                        file.write_all(raw_str.as_bytes()).unwrap();
                     }
 
                     if ui.button("open").clicked() {
@@ -49,16 +55,20 @@ impl App for Euclid {
                 });
 
                 ui.menu_button("examples", |ui| {
-                    if ui.button("triangle").clicked() {
-                        todo!()
-                    }
+                    let example_names = std::fs::read_dir("examples")
+                        .expect("could not read examples folder")
+                        .map(|res| res.map(|e| e.file_name()))
+                        .collect::<Result<Vec<_>, std::io::Error>>()
+                        .expect("could not read examples folder");
 
-                    if ui.button("pentagon").clicked() {
-                        todo!()
-                    }
+                    for example in example_names {
+                        let example = example.to_string_lossy();
+                        if ui.button(example.clone().strip_suffix(".yml").unwrap()).clicked() {
+                            let contents = std::fs::read_to_string(format!("examples/{}", example))
+                                .expect("could not read file");
 
-                    if ui.button("hexagon").clicked() {
-                        todo!()
+                            self.engine.load(&contents).expect("could not load file");
+                        }
                     }
                 });
             });
@@ -96,10 +106,13 @@ impl App for Euclid {
 
                     ui::grid::add_row(ui, "color", |ui| {
                         egui::ComboBox::from_id_source("color-select")
-                            .selected_text(self.engine
+                            .selected_text(
+                                self.engine
                                     .config
                                     .get_name(&self.engine.current_color)
-                                    .unwrap_or("custom".to_owned()).to_string())
+                                    .unwrap_or("custom".to_owned())
+                                    .to_string(),
+                            )
                             .show_ui(ui, |ui| {
                                 for color in &self.engine.config.tool_colors {
                                     ui.selectable_value(

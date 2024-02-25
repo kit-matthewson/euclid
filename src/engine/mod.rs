@@ -251,7 +251,6 @@ impl Engine {
         EngineStats::from(self)
     }
 
-    #[allow(dead_code)]
     pub fn load(&mut self, data: &str) -> Result<(), serde_yaml::Error> {
         self.clear();
         self.constructions = serde_yaml::from_str::<Vec<Construction>>(data)?;
@@ -259,8 +258,7 @@ impl Engine {
         Ok(())
     }
 
-    #[allow(dead_code)]
-    pub fn save(&self) -> String {
-        todo!();
+    pub fn save(&self) -> Result<String, serde_yaml::Error> {
+        serde_yaml::to_string(&self.constructions)
     }
 }
