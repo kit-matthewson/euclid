@@ -94,7 +94,7 @@ impl App for Euclid {
                             });
                     });
 
-                    ui::grid::add_row(ui, "colour", |ui| {
+                    ui::grid::add_row(ui, "color", |ui| {
                         egui::ComboBox::from_id_source("color-select")
                             .selected_text(format!(
                                 "{}",
