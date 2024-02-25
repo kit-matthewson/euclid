@@ -121,7 +121,7 @@ impl Engine {
                         .color(self.current_color.gamma_multiply(0.2))
                         .style(LineStyle::dotted_loose()),
                 );
-            } else if self.points.len() == 0 {
+            } else if self.points.is_empty() {
                 ui.line(
                     utils::circle(mouse_pos, self.snap_radius)
                         .color(self.current_color.gamma_multiply(0.2))
@@ -130,7 +130,7 @@ impl Engine {
             }
 
             if !self.points.is_empty() {
-                for line in self.current_tool.get_guides(&self.points, snap_pos, &ui) {
+                for line in self.current_tool.get_guides(&self.points, snap_pos, ui) {
                     ui.line(
                         line.color(self.current_color.gamma_multiply(0.5))
                             .width(self.current_width),
@@ -162,7 +162,7 @@ impl Engine {
         snap_pos
     }
 
-    pub fn closest_intersection(&self, mouse_pos: Pos2, ignore: &Vec<Pos2>) -> Option<Pos2> {
+    pub fn closest_intersection(&self, mouse_pos: Pos2, ignore: &[Pos2]) -> Option<Pos2> {
         let mut closest: Option<Pos2> = None;
 
         for construction in &self.constructions {
@@ -204,7 +204,7 @@ impl Engine {
             let construction = Construction {
                 shape,
                 layer: self.current_layer.to_owned(),
-                color: self.current_color.clone(),
+                color: self.current_color,
                 width: self.current_width,
                 intersections: Vec::new(),
             };
@@ -248,6 +248,6 @@ impl Engine {
     }
 
     pub fn stats(&self) -> EngineStats {
-        EngineStats::from(&self)
+        EngineStats::from(self)
     }
 }

@@ -10,8 +10,8 @@ pub trait Tool {
     fn name(&self) -> &str;
     fn instructions(&self) -> Vec<&str>;
     fn num_points(&self) -> u8;
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line>;
-    fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape;
+    fn get_guides(&self, points: &[Pos2], mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line>;
+    fn get_shape(&self, points: &[Pos2]) -> shapes::Shape;
 }
 
 impl PartialEq for (dyn Tool + 'static) {
@@ -38,11 +38,11 @@ impl Tool for Compass {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &[Pos2], mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         vec![utils::circle(points[0], points[0].distance(mouse))]
     }
 
-    fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape {
+    fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Circle(shapes::CircleData {
             pos: points[0],
             r: points[0].distance(points[1]),
@@ -63,7 +63,7 @@ impl Tool for StraightEdge {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &[Pos2], mouse: Pos2, ui: &PlotUi) -> Vec<plot::Line> {
         vec![utils::line(
             points[0],
             mouse,
@@ -72,7 +72,7 @@ impl Tool for StraightEdge {
         )]
     }
 
-    fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape {
+    fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Line(shapes::LineData {
             p1: points[0],
             p2: points[1],
@@ -93,11 +93,11 @@ impl Tool for LineSegment {
         2
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &[Pos2], mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         vec![utils::segment(points[0], mouse)]
     }
 
-    fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape {
+    fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Segment(shapes::SegmentData {
             p1: points[0],
             p2: points[1],
@@ -123,7 +123,7 @@ impl Tool for Arc {
         4
     }
 
-    fn get_guides(&self, points: &Vec<Pos2>, mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
+    fn get_guides(&self, points: &[Pos2], mouse: Pos2, _ui: &PlotUi) -> Vec<plot::Line> {
         if points.len() == 1 {
             return vec![
                 utils::circle(points[0], points[0].distance(mouse)),
@@ -166,7 +166,7 @@ impl Tool for Arc {
         Vec::new()
     }
 
-    fn get_shape(&self, points: &Vec<Pos2>) -> shapes::Shape {
+    fn get_shape(&self, points: &[Pos2]) -> shapes::Shape {
         shapes::Shape::Arc(shapes::ArcData {
             pos: points[0],
             r: points[0].distance(points[1]),

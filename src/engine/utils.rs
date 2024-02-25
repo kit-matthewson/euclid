@@ -78,9 +78,9 @@ pub fn arc_angle(point: Pos2, centre: Pos2) -> f32 {
         rel.y / rel.y.abs()
     };
 
-    return (angle * sign - PI).abs();
+    (angle * sign - PI).abs()
 }
 
 pub fn within(v: f32, a: f32, b: f32) -> bool {
-    return f32::min(a, b) <= v && v <= f32::max(a, b);
+    f32::min(a, b) <= v && v <= f32::max(a, b)
 }

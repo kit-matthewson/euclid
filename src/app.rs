@@ -22,9 +22,9 @@ impl App for Euclid {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         ctx.set_visuals(egui::Visuals {
             dark_mode: true,
-            extreme_bg_color: self.engine.config.extreme_background_color.into(),
-            faint_bg_color: self.engine.config.faint_background_color.into(),
-            override_text_color: Some(self.engine.config.text_color.into()),
+            extreme_bg_color: self.engine.config.extreme_background_color,
+            faint_bg_color: self.engine.config.faint_background_color,
+            override_text_color: Some(self.engine.config.text_color),
             ..Default::default()
         });
 
@@ -82,7 +82,7 @@ impl App for Euclid {
 
                     ui::grid::add_row(ui, "tool", |ui| {
                         egui::ComboBox::from_id_source("tool-select")
-                            .selected_text(format!("{}", self.engine.current_tool.name()))
+                            .selected_text(self.engine.current_tool.name().to_string())
                             .show_ui(ui, |ui| {
                                 for tool in &self.tools {
                                     ui.selectable_value(
@@ -96,19 +96,16 @@ impl App for Euclid {
 
                     ui::grid::add_row(ui, "color", |ui| {
                         egui::ComboBox::from_id_source("color-select")
-                            .selected_text(format!(
-                                "{}",
-                                self.engine
+                            .selected_text(self.engine
                                     .config
                                     .get_name(&self.engine.current_color)
-                                    .unwrap_or("custom".to_owned())
-                            ))
+                                    .unwrap_or("custom".to_owned()).to_string())
                             .show_ui(ui, |ui| {
                                 for color in &self.engine.config.tool_colors {
                                     ui.selectable_value(
                                         &mut self.engine.current_color,
                                         *color,
-                                        format!("{}", self.engine.config.get_name(color).unwrap()),
+                                        self.engine.config.get_name(color).unwrap().to_string(),
                                     );
                                 }
                             });
@@ -149,7 +146,7 @@ impl App for Euclid {
 
                     ui::grid::add_row(ui, "layer", |ui| {
                         egui::ComboBox::from_id_source("layer-select")
-                            .selected_text(format!("{}", self.engine.current_layer))
+                            .selected_text(self.engine.current_layer.to_string())
                             .show_ui(ui, |ui| {
                                 for i in 1..=5 {
                                     let name = format!("Layer {}", i);
@@ -220,9 +217,9 @@ impl App for Euclid {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.visuals_mut().widgets.open.fg_stroke.color = self.engine.config.grid_color.into();
-            ui.visuals_mut().widgets.open.weak_bg_fill = self.engine.config.background_color.into();
-            ui.visuals_mut().faint_bg_color = self.engine.config.point_color.into();
+            ui.visuals_mut().widgets.open.fg_stroke.color = self.engine.config.grid_color;
+            ui.visuals_mut().widgets.open.weak_bg_fill = self.engine.config.background_color;
+            ui.visuals_mut().faint_bg_color = self.engine.config.point_color;
 
             ui.vertical_centered(|ui| {
                 egui::plot::Plot::new("plot")

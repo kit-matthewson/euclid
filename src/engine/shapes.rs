@@ -121,7 +121,7 @@ impl SegmentData {
             }
         }
 
-        return valid;
+        valid
     }
 }
 
@@ -145,14 +145,12 @@ impl ArcData {
                 {
                     valid.push(point);
                 }
-            } else {
-                if angle >= self.start && angle <= self.stop {
-                    valid.push(point);
-                }
+            } else if angle >= self.start && angle <= self.stop {
+                valid.push(point);
             }
         }
 
-        return valid;
+        valid
     }
 }
 
@@ -191,7 +189,7 @@ impl Shape {
 
     fn circle_circle(a: &CircleData, b: &CircleData) -> Vec<Pos2> {
         if Pos2::distance_sq(a.pos, b.pos) > f32::powi(a.r + b.r, 2) {
-            return Vec::new();
+            Vec::new()
         } else {
             let m = (a.pos.x - b.pos.x) / (b.pos.y - a.pos.y);
 
@@ -217,13 +215,13 @@ impl Shape {
                 + (b.r * b.r))
                 / (2.0 * (a.pos.y - b.pos.y));
 
-            return Shape::circle_line(
+            Shape::circle_line(
                 a,
                 &LineData {
                     p1: Pos2::new(0.0, c),
                     p2: Pos2::new(1.0, m + c),
                 },
-            );
+            )
         }
     }
 
@@ -257,20 +255,20 @@ impl Shape {
             let y1 = m * x1 + c;
             let y2 = m * x2 + c;
 
-            return vec![Pos2::new(x1, y1), Pos2::new(x2, y2)];
+            vec![Pos2::new(x1, y1), Pos2::new(x2, y2)]
         } else {
-            return Vec::new();
+            Vec::new()
         }
     }
 
     fn circle_segment(a: &CircleData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::circle_line(a, &b.line());
-        return b.valid_points(possible);
+        b.valid_points(possible)
     }
 
     fn circle_arc(a: &CircleData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_circle(a, &b.circle());
-        return b.valid_points(possible);
+        b.valid_points(possible)
     }
 
     fn line_line(a: &LineData, b: &LineData) -> Vec<Pos2> {
@@ -295,31 +293,31 @@ impl Shape {
         let x = (b.p1.y - a.p1.y - (m2 * b.p1.x) + (m1 * a.p1.x)) / (m1 - m2);
         let y = m1 * (x - a.p1.x) + a.p1.y;
 
-        return vec![Pos2::new(x, y)];
+        vec![Pos2::new(x, y)]
     }
 
     fn line_segment(a: &LineData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::line_line(a, &b.line());
-        return b.valid_points(possible);
+        b.valid_points(possible)
     }
 
     fn line_arc(a: &LineData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_line(&b.circle(), a);
-        return b.valid_points(possible);
+        b.valid_points(possible)
     }
 
     fn segment_segment(a: &SegmentData, b: &SegmentData) -> Vec<Pos2> {
         let possible = Shape::line_segment(&a.line(), b);
-        return a.valid_points(possible);
+        a.valid_points(possible)
     }
 
     fn segment_arc(a: &SegmentData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::line_arc(&a.line(), b);
-        return a.valid_points(possible);
+        a.valid_points(possible)
     }
 
     fn arc_arc(a: &ArcData, b: &ArcData) -> Vec<Pos2> {
         let possible = Shape::circle_arc(&a.circle(), b);
-        return a.valid_points(possible);
+        a.valid_points(possible)
     }
 }
