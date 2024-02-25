@@ -108,10 +108,7 @@ impl App for Euclid {
                                     ui.selectable_value(
                                         &mut self.engine.current_color,
                                         *color,
-                                        format!(
-                                            "{:?}",
-                                            self.engine.config.get_name(color).unwrap()
-                                        ),
+                                        format!("{}", self.engine.config.get_name(color).unwrap()),
                                     );
                                 }
                             });
