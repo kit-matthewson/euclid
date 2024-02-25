@@ -1,11 +1,11 @@
 use eframe::App;
-use egui::{plot::Legend, Color32, Pos2, RichText};
+use egui::{
+    plot::{Legend, PlotPoint},
+    Pos2, RichText,
+};
 
 use crate::{
-    engine::{
-        shapes::{CircleData, Construction, Shape},
-        tools, Engine,
-    },
+    engine::{tools, Engine},
     ui,
 };
 
@@ -133,6 +133,21 @@ impl App for Euclid {
                             .unwrap_or(&"none"),
                     );
 
+                    ui.horizontal(|ui| {
+                        ui.add(egui::DragValue::new(&mut self.point_inp.x));
+                        ui.add(egui::DragValue::new(&mut self.point_inp.y));
+
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.button("insert point").clicked() {
+                                self.engine
+                                    .click(PlotPoint::new(self.point_inp.x, self.point_inp.y));
+                                self.point_inp = Pos2::ZERO;
+                            }
+                        });
+                    });
+
+                    ui.end_row();
+
                     ui::grid::separator(ui);
 
                     ui::grid::add_row(ui, "layer", |ui| {
@@ -165,32 +180,6 @@ impl App for Euclid {
                     ui::grid::add_row(ui, "show intersections", |ui| {
                         ui.add(egui::Checkbox::new(&mut self.engine.show_intersections, ""));
                     });
-
-                    ui::grid::separator(ui);
-
-                    ui.horizontal(|ui| {
-                        ui.add(egui::DragValue::new(&mut self.point_inp.x));
-                        ui.add(egui::DragValue::new(&mut self.point_inp.y));
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.button("add point").clicked() {
-                                self.engine.add_construction(Construction {
-                                    shape: Shape::Circle(CircleData {
-                                        pos: self.point_inp,
-                                        r: 0.001,
-                                    }),
-                                    layer: String::new(),
-                                    color: Color32::TRANSPARENT,
-                                    width: 0.0,
-                                    intersections: Vec::from([self.point_inp]),
-                                });
-
-                                self.point_inp = Pos2::ZERO;
-                            }
-                        });
-                    });
-
-                    ui.end_row();
 
                     ui::grid::separator(ui);
                 });
