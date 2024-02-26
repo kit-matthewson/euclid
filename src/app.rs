@@ -18,6 +18,11 @@ pub struct Euclid {
 
     point_inp: Pos2,
     show_axes: bool,
+
+    show_save_window: bool,
+    show_open_window: bool,
+
+    file_name: Option<String>,
 }
 
 impl App for Euclid {
@@ -38,15 +43,11 @@ impl App for Euclid {
                     }
 
                     if ui.button("save").clicked() {
-                        let raw_str = self.engine.save().expect("could not save file");
-
-                        std::fs::create_dir_all("saves").unwrap();
-                        let mut file = std::fs::File::create("saves/save.yml").unwrap();
-                        file.write_all(raw_str.as_bytes()).unwrap();
+                        self.show_save_window = true;
                     }
 
                     if ui.button("open").clicked() {
-                        todo!();
+                        self.show_open_window = true;
                     }
 
                     if ui.button("quit").clicked() {
@@ -63,7 +64,10 @@ impl App for Euclid {
 
                     for example in example_names {
                         let example = example.to_string_lossy();
-                        if ui.button(example.clone().strip_suffix(".yml").unwrap()).clicked() {
+                        if ui
+                            .button(example.clone().strip_suffix(".yml").unwrap())
+                            .clicked()
+                        {
                             let contents = std::fs::read_to_string(format!("examples/{}", example))
                                 .expect("could not read file");
 
@@ -75,9 +79,9 @@ impl App for Euclid {
         });
 
         egui::SidePanel::left("sidebar")
-            .min_width(200.0)
+            .resizable(false)
             .show(ctx, |ui| {
-                ui.add_space(20.0);
+                ui.add_space(16.0);
 
                 ui::grid::new("side-grid").show(ui, |ui| {
                     ui::grid::add_text_row(
@@ -230,11 +234,39 @@ impl App for Euclid {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.visuals_mut().widgets.open.fg_stroke.color = self.engine.config.grid_color;
-            ui.visuals_mut().widgets.open.weak_bg_fill = self.engine.config.background_color;
-            ui.visuals_mut().faint_bg_color = self.engine.config.point_color;
+            if ui::window::SaveWindow::new(&mut self.show_save_window, &mut self.file_name)
+                .show(ctx)
+            {
+                let contents = self.engine.save().expect("could not save file");
+
+                let mut file = std::fs::File::create(format!(
+                    "saves/{}.yml",
+                    self.file_name.clone().unwrap_or("unnamed".to_owned())
+                ))
+                .expect("could not create file");
+
+                file.write_all(contents.as_bytes())
+                    .expect("could not write save to file");
+
+                self.show_save_window = false;
+            }
+
+            if ui::window::OpenWindow::new(&mut self.show_open_window, &mut self.file_name)
+                .show(ctx)
+            {
+                let contents =
+                    std::fs::read_to_string(format!("saves/{}.yml", self.file_name.clone().unwrap()))
+                        .expect("could not read file");
+                self.engine.load(&contents).expect("could not open file");
+
+                self.show_open_window = false;
+            }
 
             ui.vertical_centered(|ui| {
+                ui.visuals_mut().widgets.open.fg_stroke.color = self.engine.config.grid_color;
+                ui.visuals_mut().widgets.open.weak_bg_fill = self.engine.config.background_color;
+                ui.visuals_mut().faint_bg_color = self.engine.config.point_color;
+
                 egui::plot::Plot::new("plot")
                     .allow_double_click_reset(false)
                     .show_x(false)
@@ -270,6 +302,11 @@ impl Euclid {
             engine: Engine::new("config.yml"),
             point_inp: Pos2::ZERO,
             show_axes: true,
+
+            show_save_window: false,
+            show_open_window: false,
+
+            file_name: None,
 
             tools: vec![
                 &tools::Compass,
