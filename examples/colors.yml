@@ -1,0 +1,105 @@
+- shape: !Line
+    p1:
+      - -0.6
+      - -1.0
+    p2:
+      - -0.6
+      - 1.0
+  layer: Red
+  color:
+    - 204
+    - 36
+    - 29
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - -0.4
+      - -1.0
+    p2:
+      - -0.4
+      - 1.0
+  layer: Green
+  color:
+    - 152
+    - 151
+    - 26
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - -0.2
+      - -1.0
+    p2:
+      - -0.2
+      - 1.0
+  layer: Yellow
+  color:
+    - 215
+    - 143
+    - 33
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - -0.0
+      - -1.0
+    p2:
+      - -0.0
+      - 1.0
+  layer: Blue
+  color:
+    - 69
+    - 133
+    - 136
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - 0.2
+      - -1.0
+    p2:
+      - 0.2
+      - 1.0
+  layer: Purple
+  color:
+    - 177
+    - 98
+    - 133
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - 0.4
+      - -1.0
+    p2:
+      - 0.4
+      - 1.0
+  layer: Aqua
+  color:
+    - 104
+    - 139
+    - 106
+    - 255
+  width: 5.0
+  intersections: []
+- shape: !Line
+    p1:
+      - 0.6
+      - -1.0
+    p2:
+      - 0.6
+      - 1.0
+  layer: Orange
+  color:
+    - 214
+    - 93
+    - 14
+    - 255
+  width: 5.0
+  intersections: []
